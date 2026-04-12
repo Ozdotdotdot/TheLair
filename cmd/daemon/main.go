@@ -12,10 +12,10 @@ import (
 	"time"
 
 	evdev "github.com/holoplot/go-evdev"
-	"github.com/yourusername/huntsman-panel/internal/actions"
-	"github.com/yourusername/huntsman-panel/internal/animations"
-	"github.com/yourusername/huntsman-panel/internal/config"
-	"github.com/yourusername/huntsman-panel/internal/razer"
+	"github.com/ozdotdotdot/TheLair/internal/actions"
+	"github.com/ozdotdotdot/TheLair/internal/animations"
+	"github.com/ozdotdotdot/TheLair/internal/config"
+	"github.com/ozdotdotdot/TheLair/internal/razer"
 )
 
 var (
@@ -110,49 +110,47 @@ func main() {
 	}()
 
 	for {
-		events, err := dev.Read()
+		event, err := dev.ReadOne()
 		if err != nil {
 			log.Printf("[main] read error: %v", err)
 			continue
 		}
 
-		for _, event := range events {
-			if event.Type != evdev.EV_KEY {
-				continue
-			}
+		if event.Type != evdev.EV_KEY {
+			continue
+		}
 
-			// Wake from idle on any keypress.
-			lastActivity.Store(time.Now().UnixNano())
-			if isIdle.Swap(false) {
-				if !lightsKilled.Load() {
-					animations.SetActive()
-				}
+		// Wake from idle on any keypress.
+		lastActivity.Store(time.Now().UnixNano())
+		if isIdle.Swap(false) {
+			if !lightsKilled.Load() {
+				animations.SetActive()
 			}
+		}
 
-			if modifierCodes[event.Code] {
-				continue
-			}
-			if event.Value != 1 { // key-down only
-				continue
-			}
+		if modifierCodes[event.Code] {
+			continue
+		}
+		if event.Value != 1 { // key-down only
+			continue
+		}
 
-			m, ok := macros[event.Code]
-			if !ok {
-				continue
-			}
+		m, ok := macros[event.Code]
+		if !ok {
+			continue
+		}
 
-			fmt.Printf("[main] macro: %s\n", m.label)
-			success := m.action()
+		fmt.Printf("[main] macro: %s\n", m.label)
+		success := m.action()
 
-			// Kill switch manages its own visual state.
-			if event.Code == evdev.KEY_ESC {
-				continue
-			}
-			if success {
-				animations.ChevronSuccess()
-			} else {
-				animations.ErrorFlash()
-			}
+		// Kill switch manages its own visual state.
+		if event.Code == evdev.KEY_ESC {
+			continue
+		}
+		if success {
+			animations.ChevronSuccess()
+		} else {
+			animations.ErrorFlash()
 		}
 	}
 }
@@ -161,7 +159,7 @@ func main() {
 // wait between each. Handles the race between our service and openrazer-daemon at boot.
 func initRazerWithRetry(maxAttempts int, wait time.Duration) error {
 	var err error
-	for i := range maxAttempts {
+	for i := 0; i < maxAttempts; i++ {
 		err = razer.Init()
 		if err == nil {
 			return nil

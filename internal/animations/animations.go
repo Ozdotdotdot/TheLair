@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/yourusername/huntsman-panel/internal/config"
-	"github.com/yourusername/huntsman-panel/internal/razer"
+	"github.com/ozdotdotdot/TheLair/internal/config"
+	"github.com/ozdotdotdot/TheLair/internal/razer"
 )
 
 var (

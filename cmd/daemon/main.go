@@ -114,14 +114,12 @@ func main() {
 	// Amber keyboard = HA is down. Restores previous state when it comes back.
 	go func() {
 		client := actions.HealthClient()
-		url := os.Getenv("HA_HEALTH_CHECK_URL")
+		url := actions.HealthCheckURL()
 		if url == "" {
-			url = os.Getenv("HA_LIGHT_TOGGLE_URL") // fall back to toggle URL as a proxy
-		}
-		if url == "" {
-			log.Println("[health] no URL configured, skipping health check")
+			log.Println("[health] no HA URL configured, skipping health check")
 			return
 		}
+		log.Printf("[health] checking %s every %s", url, config.HealthCheckInterval)
 		for {
 			time.Sleep(config.HealthCheckInterval)
 			resp, err := client.Get(url)

@@ -1,31 +1,27 @@
 package razer
 
-// OpenRazer D-Bus interface:
+// OpenRazer D-Bus interface (verified via introspection):
 //   Service:   org.razer
 //   Manager:   /org/razer
 //     razer.devices.getDevices() → []string (device serials)
-//   Per-device: /org/razer/device/{serial}
-//     razer.device.lighting.brightness  setBrightness(float64 0-100)
-//     razer.device.lighting.chroma      setStatic(r,g,b byte)
-//                                       setBreathing(r,g,b byte)
+//   Per-device: /org/razer/device/{SERIAL} — serial is UPPERCASE, as returned by getDevices
+//     razer.device.lighting.brightness  setBrightness(d: float64 0-100)
+//     razer.device.lighting.chroma      setStatic(y,y,y: r,g,b)
+//                                       setBreathSingle(y,y,y: r,g,b)
 //                                       setCustom()
 //                                       setNone()
-//     razer.device.lighting.custom      setKeyRow(row, startCol byte, colors []byte)
-//       colors = packed RGB: [r0,g0,b0, r1,g1,b1, ...]
-//
-// Verify matrix dimensions and exact D-Bus path after install:
-//   gdbus introspect --session --dest org.razer --object-path /org/razer/device/<serial>
+//     razer.device.lighting.custom      setKeyRow(ay: payload)
+//       payload = [row, startCol, endCol, r0,g0,b0, r1,g1,b1, ...]
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/godbus/dbus/v5"
 )
 
 // MatrixRows and MatrixCols for the Huntsman.
-// VERIFY these against your specific model via gdbus introspect before running animations.
+// Verified via introspection: getMatrixDimensions returns [rows, cols].
 const (
 	MatrixRows = 6
 	MatrixCols = 22
@@ -63,10 +59,9 @@ func Init() error {
 		return fmt.Errorf("no Razer devices found via D-Bus")
 	}
 
-	// NOTE: verify the path casing against gdbus introspect output —
-	// openrazer may or may not lowercase the serial in the object path.
+	// Serial must be kept as-is (uppercase) — the D-Bus path is case-sensitive.
 	serial := serials[0]
-	path := dbus.ObjectPath("/org/razer/device/" + strings.ToLower(serial))
+	path := dbus.ObjectPath("/org/razer/device/" + serial)
 	instance = &Device{conn: conn, path: path}
 	fmt.Printf("[razer] connected: %s\n", serial)
 	return nil
@@ -76,41 +71,32 @@ func (d *Device) obj() dbus.BusObject {
 	return d.conn.Object(razerService, d.path)
 }
 
-func SetBrightness(level byte) {
+func call(method string, args ...interface{}) {
 	if instance == nil {
 		return
 	}
 	instance.mu.Lock()
 	defer instance.mu.Unlock()
+	if err := instance.obj().Call(method, 0, args...).Err; err != nil {
+		fmt.Printf("[razer] %s failed: %v\n", method, err)
+	}
+}
+
+func SetBrightness(level byte) {
 	pct := float64(level) / 255.0 * 100.0
-	instance.obj().Call(ifaceBrightness+".setBrightness", 0, pct)
+	call(ifaceBrightness+".setBrightness", pct)
 }
 
 func Static(r, g, b byte) {
-	if instance == nil {
-		return
-	}
-	instance.mu.Lock()
-	defer instance.mu.Unlock()
-	instance.obj().Call(ifaceChroma+".setStatic", 0, r, g, b)
+	call(ifaceChroma+".setStatic", r, g, b)
 }
 
 func Breathing(r, g, b byte) {
-	if instance == nil {
-		return
-	}
-	instance.mu.Lock()
-	defer instance.mu.Unlock()
-	instance.obj().Call(ifaceChroma+".setBreathing", 0, r, g, b)
+	call(ifaceChroma+".setBreathSingle", r, g, b)
 }
 
 func Off() {
-	if instance == nil {
-		return
-	}
-	instance.mu.Lock()
-	defer instance.mu.Unlock()
-	instance.obj().Call(ifaceChroma+".setNone", 0)
+	call(ifaceChroma+".setNone")
 }
 
 func FlushMatrix(matrix [MatrixRows][MatrixCols][3]byte) {
@@ -119,14 +105,25 @@ func FlushMatrix(matrix [MatrixRows][MatrixCols][3]byte) {
 	}
 	instance.mu.Lock()
 	defer instance.mu.Unlock()
-	instance.obj().Call(ifaceChroma+".setCustom", 0)
+
+	if err := instance.obj().Call(ifaceChroma+".setCustom", 0).Err; err != nil {
+		fmt.Printf("[razer] setCustom failed: %v\n", err)
+		return
+	}
+
 	for row := 0; row < MatrixRows; row++ {
-		rowBytes := make([]byte, MatrixCols*3)
+		// payload = [row, startCol, endCol, r0,g0,b0, r1,g1,b1, ...]
+		payload := make([]byte, 3+MatrixCols*3)
+		payload[0] = byte(row)
+		payload[1] = 0
+		payload[2] = byte(MatrixCols - 1)
 		for col := 0; col < MatrixCols; col++ {
-			rowBytes[col*3] = matrix[row][col][0]
-			rowBytes[col*3+1] = matrix[row][col][1]
-			rowBytes[col*3+2] = matrix[row][col][2]
+			payload[3+col*3] = matrix[row][col][0]
+			payload[3+col*3+1] = matrix[row][col][1]
+			payload[3+col*3+2] = matrix[row][col][2]
 		}
-		instance.obj().Call(ifaceCustom+".setKeyRow", 0, byte(row), byte(0), rowBytes)
+		if err := instance.obj().Call(ifaceCustom+".setKeyRow", 0, payload).Err; err != nil {
+			fmt.Printf("[razer] setKeyRow row %d failed: %v\n", row, err)
+		}
 	}
 }

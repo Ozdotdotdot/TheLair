@@ -116,8 +116,6 @@ func main() {
 			continue
 		}
 
-		log.Printf("[debug] event type=%d code=%d value=%d", event.Type, event.Code, event.Value)
-
 		if event.Type != evdev.EV_KEY {
 			continue
 		}

@@ -1,0 +1,13 @@
+[Unit]
+Description=Huntsman Wall Panel Macro Daemon
+After=default.target
+
+[Service]
+Type=simple
+EnvironmentFile=/opt/huntsman-panel/.env
+ExecStart=/opt/huntsman-panel/huntsman-panel
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

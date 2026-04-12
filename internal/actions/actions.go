@@ -1,0 +1,27 @@
+package actions
+
+import (
+	"fmt"
+	"net/http"
+	"os"
+	"time"
+)
+
+var client = &http.Client{Timeout: 5 * time.Second}
+
+// ToggleLights sends a GET to the Home Assistant webhook.
+// Returns true on success (2xx response).
+func ToggleLights() bool {
+	url := os.Getenv("HA_LIGHT_TOGGLE_URL")
+	if url == "" {
+		fmt.Println("[actions] HA_LIGHT_TOGGLE_URL not set")
+		return false
+	}
+	resp, err := client.Get(url)
+	if err != nil {
+		fmt.Printf("[actions] light toggle failed: %v\n", err)
+		return false
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode >= 200 && resp.StatusCode < 300
+}

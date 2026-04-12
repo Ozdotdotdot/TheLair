@@ -5,7 +5,7 @@ import "time"
 const (
 	KeyboardDevice = "/dev/input/by-id/usb-Razer_Razer_Huntsman-if01-event-kbd"
 
-	IdleTimeout       = 10 * time.Minute
+	IdleTimeout       = 1 * time.Minute
 	HealthCheckInterval = 60 * time.Second
 	BrightnessActive = byte(255)
 	BrightnessIdle   = byte(38) // ~15%

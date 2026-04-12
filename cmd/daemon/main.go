@@ -19,9 +19,10 @@ import (
 )
 
 var (
-	lightsKilled atomic.Bool
-	isIdle       atomic.Bool
-	lastActivity atomic.Int64 // UnixNano
+	lightsKilled  atomic.Bool
+	isIdle        atomic.Bool
+	haUnreachable atomic.Bool
+	lastActivity  atomic.Int64 // UnixNano
 )
 
 type macro struct {
@@ -102,8 +103,49 @@ func main() {
 			elapsed := time.Since(time.Unix(0, lastActivity.Load()))
 			if !isIdle.Load() && elapsed > config.IdleTimeout {
 				isIdle.Store(true)
-				if !lightsKilled.Load() {
+				if !lightsKilled.Load() && !haUnreachable.Load() {
 					animations.SetIdle()
+				}
+			}
+		}
+	}()
+
+	// HA health check — polls every HealthCheckInterval.
+	// Amber keyboard = HA is down. Restores previous state when it comes back.
+	go func() {
+		client := actions.HealthClient()
+		url := os.Getenv("HA_HEALTH_CHECK_URL")
+		if url == "" {
+			url = os.Getenv("HA_LIGHT_TOGGLE_URL") // fall back to toggle URL as a proxy
+		}
+		if url == "" {
+			log.Println("[health] no URL configured, skipping health check")
+			return
+		}
+		for {
+			time.Sleep(config.HealthCheckInterval)
+			resp, err := client.Get(url)
+			if err == nil {
+				resp.Body.Close()
+			}
+			wasUnreachable := haUnreachable.Load()
+			nowUnreachable := err != nil || resp.StatusCode >= 500
+
+			if nowUnreachable && !wasUnreachable {
+				haUnreachable.Store(true)
+				log.Println("[health] HA unreachable — switching to warning color")
+				if !lightsKilled.Load() {
+					animations.SetWarning()
+				}
+			} else if !nowUnreachable && wasUnreachable {
+				haUnreachable.Store(false)
+				log.Println("[health] HA reachable again — restoring state")
+				if !lightsKilled.Load() {
+					if isIdle.Load() {
+						animations.SetIdle()
+					} else {
+						animations.SetActive()
+					}
 				}
 			}
 		}

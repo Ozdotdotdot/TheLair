@@ -117,3 +117,8 @@ func SetIdle() {
 	razer.SetBrightness(config.BrightnessIdle)
 	razer.Breathing(config.ColorIdle[0], config.ColorIdle[1], config.ColorIdle[2])
 }
+
+func SetWarning() {
+	razer.SetBrightness(config.BrightnessActive)
+	razer.Static(config.ColorWarning[0], config.ColorWarning[1], config.ColorWarning[2])
+}

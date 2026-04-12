@@ -9,6 +9,12 @@ import (
 
 var client = &http.Client{Timeout: 5 * time.Second}
 
+// HealthClient returns an HTTP client suitable for the health check goroutine.
+// Shorter timeout so a slow HA doesn't block the check for too long.
+func HealthClient() *http.Client {
+	return &http.Client{Timeout: 3 * time.Second}
+}
+
 // ToggleLights sends a GET to the Home Assistant webhook.
 // Returns true on success (2xx response).
 func ToggleLights() bool {

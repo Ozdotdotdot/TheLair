@@ -19,6 +19,6 @@ const (
 var (
 	ColorChevron = [3]byte{255, 255, 255}
 	ColorError   = [3]byte{255, 0, 0}
-	ColorIdle    = [3]byte{20, 20, 60}
+	ColorIdle    = [3]byte{255, 255, 255}
 	ColorOff     = [3]byte{0, 0, 0}
 )

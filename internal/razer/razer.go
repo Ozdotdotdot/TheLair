@@ -122,7 +122,7 @@ func FlushMatrix(matrix [MatrixRows][MatrixCols][3]byte) {
 			payload[3+col*3+1] = matrix[row][col][1]
 			payload[3+col*3+2] = matrix[row][col][2]
 		}
-		if err := instance.obj().Call(ifaceCustom+".setKeyRow", 0, payload).Err; err != nil {
+		if err := instance.obj().Call(ifaceChroma+".setKeyRow", 0, payload).Err; err != nil {
 			fmt.Printf("[razer] setKeyRow row %d failed: %v\n", row, err)
 		}
 	}

@@ -3,7 +3,7 @@ package config
 import "time"
 
 const (
-	KeyboardDevice = "/dev/input/by-id/usb-Razer_Razer_Huntsman-event-kbd"
+	KeyboardDevice = "/dev/input/by-id/usb-Razer_Razer_Huntsman-if01-event-kbd"
 
 	IdleTimeout      = 10 * time.Minute
 	BrightnessActive = byte(255)

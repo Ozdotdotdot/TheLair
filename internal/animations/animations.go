@@ -96,7 +96,7 @@ func ErrorFlash() {
 			}
 			razer.Static(config.ColorError[0], config.ColorError[1], config.ColorError[2])
 			time.Sleep(config.ErrorFlashDelay)
-			razer.Off()
+			razer.Static(config.ColorOff[0], config.ColorOff[1], config.ColorOff[2])
 			time.Sleep(config.ErrorFlashDelay)
 		}
 		select {

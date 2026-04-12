@@ -9,8 +9,9 @@ build:
 	GOOS=linux GOARCH=arm64 go build -o $(BINARY) ./cmd/daemon
 
 deploy: build
+	ssh $(PI) "systemctl --user stop $(SERVICE)"
 	scp $(BINARY) $(PI):$(REMOTE)/huntsman-panel
-	ssh $(PI) "systemctl --user restart $(SERVICE)"
+	ssh $(PI) "systemctl --user start $(SERVICE)"
 
 logs:
 	ssh $(PI) "journalctl --user -u $(SERVICE) -f"

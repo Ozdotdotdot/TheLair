@@ -187,10 +187,25 @@ func main() {
 		if event.Code == evdev.KEY_ESC {
 			continue
 		}
+
+		// restore returns the keyboard to the correct post-animation state.
+		// Pressing a key always counts as activity, so we go active (not idle).
+		// Idle will kick in naturally after IdleTimeout with no further input.
+		restore := func() {
+			switch {
+			case lightsKilled.Load():
+				razer.Off()
+			case haUnreachable.Load():
+				animations.SetWarning()
+			default:
+				animations.SetActive()
+			}
+		}
+
 		if success {
-			animations.ChevronSuccess()
+			animations.ChevronSuccess(restore)
 		} else {
-			animations.ErrorFlash()
+			animations.ErrorFlash(restore)
 		}
 	}
 }

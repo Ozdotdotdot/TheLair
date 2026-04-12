@@ -38,7 +38,7 @@ func run(fn func(ctx context.Context)) {
 //	row 3: ░░░░░░X   (tip)
 //	row 4: ░░░░░X░   (1 col behind tip)
 //	row 5: ░░░░X░░   (2 cols behind tip)
-func ChevronSuccess() {
+func ChevronSuccess(restore func()) {
 	run(func(ctx context.Context) {
 		const (
 			numChevrons = 3
@@ -80,13 +80,13 @@ func ChevronSuccess() {
 			return
 		default:
 			time.Sleep(config.ChevronHold)
-			SetActive()
+			restore()
 		}
 	})
 }
 
 // ErrorFlash strobes the board red N times.
-func ErrorFlash() {
+func ErrorFlash(restore func()) {
 	run(func(ctx context.Context) {
 		for i := 0; i < config.ErrorFlashCount; i++ {
 			select {
@@ -103,7 +103,7 @@ func ErrorFlash() {
 		case <-ctx.Done():
 			return
 		default:
-			SetActive()
+			restore()
 		}
 	})
 }

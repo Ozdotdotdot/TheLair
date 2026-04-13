@@ -178,24 +178,28 @@ func streamSSE(ctx context.Context, ch chan<- PlayerState) error {
 
 // --- Spectrum poller ---
 
-// PollSpectrum polls the /spectrum endpoint at the given interval and sends
-// SpectrumFrames on the returned channel. Falls back to zero bands on error.
+// PollSpectrum polls the /spectrum endpoint as fast as the server responds
+// (back-to-back GETs). Sends SpectrumFrames on the returned channel.
+// The interval parameter is used as a minimum sleep between polls to avoid
+// busy-spinning if the server responds instantly.
 func PollSpectrum(ctx context.Context, bands int, interval time.Duration) <-chan SpectrumFrame {
-	ch := make(chan SpectrumFrame, 2)
+	ch := make(chan SpectrumFrame, 4)
 	go func() {
 		defer close(ch)
 		url := fmt.Sprintf("%s/spectrum?bands=%d", baseURL, bands)
-		pollClient := &http.Client{Timeout: 200 * time.Millisecond}
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
+		pollClient := &http.Client{Timeout: 150 * time.Millisecond}
+
+		var count int
+		start := time.Now()
 
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			case <-ticker.C:
+			default:
 			}
 
+			reqStart := time.Now()
 			var frame SpectrumFrame
 			resp, err := pollClient.Get(url)
 			if err != nil {
@@ -204,6 +208,8 @@ func PollSpectrum(ctx context.Context, bands int, interval time.Duration) <-chan
 				case ch <- frame:
 				default:
 				}
+				// Brief sleep on error to avoid hammering.
+				time.Sleep(100 * time.Millisecond)
 				continue
 			}
 			json.NewDecoder(resp.Body).Decode(&frame)
@@ -212,6 +218,21 @@ func PollSpectrum(ctx context.Context, bands int, interval time.Duration) <-chan
 			select {
 			case ch <- frame:
 			default:
+			}
+
+			// Log effective poll rate every 5 seconds.
+			count++
+			if elapsed := time.Since(start); elapsed >= 5*time.Second {
+				fmt.Printf("[sonotui] spectrum poll rate: %.1f Hz (avg RTT: %dms)\n",
+					float64(count)/elapsed.Seconds(),
+					int(elapsed.Milliseconds())/count)
+				count = 0
+				start = time.Now()
+			}
+
+			// If the request was very fast, sleep a bit to avoid busy-spinning.
+			if rtt := time.Since(reqStart); rtt < interval {
+				time.Sleep(interval - rtt)
 			}
 		}
 	}()

@@ -15,7 +15,9 @@ import (
 	"github.com/ozdotdotdot/TheLair/internal/actions"
 	"github.com/ozdotdotdot/TheLair/internal/animations"
 	"github.com/ozdotdotdot/TheLair/internal/config"
+	"github.com/ozdotdotdot/TheLair/internal/modes"
 	"github.com/ozdotdotdot/TheLair/internal/razer"
+	"github.com/ozdotdotdot/TheLair/internal/sonotui"
 )
 
 var (
@@ -24,44 +26,6 @@ var (
 	haUnreachable atomic.Bool
 	lastActivity  atomic.Int64 // UnixNano
 )
-
-type macro struct {
-	label  string
-	action func() bool
-}
-
-var macros = map[evdev.EvCode]macro{
-	evdev.KEY_ESC: {
-		label: "Kill Switch",
-		action: func() bool {
-			if lightsKilled.Load() {
-				lightsKilled.Store(false)
-				// Restore to the correct state rather than always going active.
-				if time.Since(time.Unix(0, lastActivity.Load())) > config.IdleTimeout {
-					animations.SetIdle()
-				} else {
-					animations.SetActive()
-				}
-			} else {
-				lightsKilled.Store(true)
-				razer.Off()
-			}
-			return true
-		},
-	},
-	evdev.KEY_F1: {
-		label:  "Toggle Lights",
-		action: actions.ToggleLights,
-	},
-	evdev.KEY_1: {
-		label:  "Toggle Desk Lamp",
-		action: actions.ToggleDesk,
-	},
-	evdev.KEY_2: {
-		label:  "Toggle Hanging Lamp",
-		action: actions.ToggleHanging,
-	},
-}
 
 var modifierCodes = map[evdev.EvCode]bool{
 	evdev.KEY_LEFTCTRL:   true,
@@ -75,11 +39,18 @@ var modifierCodes = map[evdev.EvCode]bool{
 func main() {
 	loadEnv("/opt/huntsman-panel/.env")
 
+	// Init sonotui client (reads SONOTUI_URL env).
+	sonotui.Init()
+
+	// Register modes. First registered = default.
+	modes.Register(&modes.HomeMode{})
+	modes.Register(&modes.MusicMode{})
+
 	// Retry razer init — openrazer-daemon may still be starting up at boot.
 	if err := initRazerWithRetry(10, 2*time.Second); err != nil {
 		log.Fatalf("[main] razer init: %v", err)
 	}
-	animations.SetActive()
+	modes.Current().OnEnter()
 
 	dev, err := evdev.Open(config.KeyboardDevice)
 	if err != nil {
@@ -96,6 +67,7 @@ func main() {
 		<-sigs
 		fmt.Println("[main] shutting down")
 		dev.Ungrab()
+		modes.Current().OnExit()
 		animations.SetActive()
 		os.Exit(0)
 	}()
@@ -146,11 +118,7 @@ func main() {
 				haUnreachable.Store(false)
 				log.Println("[health] HA reachable again — restoring state")
 				if !lightsKilled.Load() {
-					if isIdle.Load() {
-						animations.SetIdle()
-					} else {
-						animations.SetActive()
-					}
+					modes.Current().RestoreState()
 				}
 			}
 		}
@@ -171,7 +139,7 @@ func main() {
 		lastActivity.Store(time.Now().UnixNano())
 		if isIdle.Swap(false) {
 			if !lightsKilled.Load() {
-				animations.SetActive()
+				modes.Current().RestoreState()
 			}
 		}
 
@@ -182,22 +150,41 @@ func main() {
 			continue
 		}
 
-		m, ok := macros[event.Code]
+		// --- Global keys (mode-independent) ---
+
+		// ESC: kill switch
+		if event.Code == evdev.KEY_ESC {
+			fmt.Println("[main] macro: Kill Switch")
+			if lightsKilled.Load() {
+				lightsKilled.Store(false)
+				if time.Since(time.Unix(0, lastActivity.Load())) > config.IdleTimeout {
+					animations.SetIdle()
+				} else {
+					modes.Current().RestoreState()
+				}
+			} else {
+				lightsKilled.Store(true)
+				razer.Off()
+			}
+			continue
+		}
+
+		// Pause/Break: cycle mode
+		if event.Code == evdev.KEY_PAUSE {
+			modes.Cycle()
+			continue
+		}
+
+		// --- Mode-specific dispatch ---
+		m, ok := modes.Current().Macros()[event.Code]
 		if !ok {
 			continue
 		}
 
-		fmt.Printf("[main] macro: %s\n", m.label)
-		success := m.action()
-
-		// Kill switch manages its own visual state.
-		if event.Code == evdev.KEY_ESC {
-			continue
-		}
+		fmt.Printf("[main] macro: %s\n", m.Label)
+		success := m.Action()
 
 		// restore returns the keyboard to the correct post-animation state.
-		// Pressing a key always counts as activity, so we go active (not idle).
-		// Idle will kick in naturally after IdleTimeout with no further input.
 		restore := func() {
 			switch {
 			case lightsKilled.Load():
@@ -205,7 +192,7 @@ func main() {
 			case haUnreachable.Load():
 				animations.SetWarning()
 			default:
-				animations.SetActive()
+				modes.Current().RestoreState()
 			}
 		}
 

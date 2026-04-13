@@ -138,6 +138,11 @@ func renderFrame(bars []float64, transport string) {
 		}
 	}
 
+	// Draw mode indicator strip (bottom of wall = column 0, left-edge keys).
+	for _, pos := range config.MusicModeIndicator {
+		matrix[pos[0]][pos[1]] = config.ColorMusicMode
+	}
+
 	// Draw numpad icon based on transport state.
 	drawNumpadIcon(&matrix, transport)
 

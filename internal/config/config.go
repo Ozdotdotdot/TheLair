@@ -40,15 +40,25 @@ var (
 	ColorMusicMode  = [3]byte{0, 180, 255}  // accent blue for mode indicator
 
 	// Numpad icon positions as [row, col] pairs.
-	// These are placeholders — run `cmd/discover` on the Pi to find real positions.
-	// Pause ‖: numpad keys 9,8,7 + 3,2,1 (two vertical bars on wall)
+	// On the wall, rows are horizontal strips. Two lit rows with a gap = pause ‖.
+	// Pause ‖: NumLock,/,* (row 1 numpad) + 4,5,6 (row 3 numpad)
 	NumpadPause = [][2]int{
-		{1, 20}, {2, 20}, {3, 20}, // 9,8,7 column
-		{1, 18}, {2, 18}, {3, 18}, // 3,2,1 column
+		{1, 18}, {1, 19}, {1, 20}, // NumLock, /, *
+		{3, 18}, {3, 19}, {3, 20}, // 4, 5, 6
 	}
-	// Play ▶: numpad keys 9,8,7 + 5 (bar + offset point on wall)
+	// Play ▶: NumLock,/,* (row 1 numpad) + 8 (row 2, center)
 	NumpadPlay = [][2]int{
-		{1, 20}, {2, 20}, {3, 20}, // 9,8,7 column
-		{2, 19}, // 5 (offset point)
+		{1, 18}, {1, 19}, {1, 20}, // NumLock, /, *
+		{2, 19},                    // 8
+	}
+
+	// Mode indicator: left-edge keys (bottom of wall when mounted vertically).
+	// `, Tab, CapsLock, LShift, LCtrl — all at column 0, rows 1-5.
+	MusicModeIndicator = [][2]int{
+		{1, 0}, // `
+		{2, 0}, // Tab
+		{3, 0}, // CapsLock
+		{4, 0}, // LShift
+		{5, 0}, // LCtrl
 	}
 )

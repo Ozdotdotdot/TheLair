@@ -33,14 +33,13 @@ func (m *MusicMode) Macros() map[evdev.EvCode]Macro {
 func (m *MusicMode) OnEnter() {
 	razer.SetBrightness(config.BrightnessActive)
 
+	// Show mode indicator strip on left edge (bottom of wall) with rest dark.
+	showModeIndicator()
+
 	if !sonotui.Available() {
-		fmt.Println("[music] sonotui not configured, showing accent color")
-		razer.Static(config.ColorMusicMode[0], config.ColorMusicMode[1], config.ColorMusicMode[2])
+		fmt.Println("[music] sonotui not configured")
 		return
 	}
-
-	// Show accent color while connecting.
-	razer.Static(config.ColorMusicMode[0], config.ColorMusicMode[1], config.ColorMusicMode[2])
 
 	ctx, cancel := context.WithCancel(context.Background())
 	m.cancel = cancel
@@ -63,9 +62,17 @@ func (m *MusicMode) RestoreState() {
 	if visualizer.Running() {
 		visualizer.Resume()
 	} else {
-		razer.SetBrightness(config.BrightnessActive)
-		razer.Static(config.ColorMusicMode[0], config.ColorMusicMode[1], config.ColorMusicMode[2])
+		showModeIndicator()
 	}
+}
+
+// showModeIndicator draws only the left-edge indicator strip, rest dark.
+func showModeIndicator() {
+	var matrix [razer.MatrixRows][razer.MatrixCols][3]byte
+	for _, pos := range config.MusicModeIndicator {
+		matrix[pos[0]][pos[1]] = config.ColorMusicMode
+	}
+	razer.FlushMatrix(matrix)
 }
 
 // playPause toggles based on last known transport state.

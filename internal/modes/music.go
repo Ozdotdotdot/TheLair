@@ -27,6 +27,26 @@ func (m *MusicMode) Macros() map[evdev.EvCode]Macro {
 		evdev.KEY_F6: {Label: "Next", Action: sonotui.Next},
 		evdev.KEY_F3: {Label: "Volume Down", Action: sonotui.VolumeDown},
 		evdev.KEY_F7: {Label: "Volume Up", Action: sonotui.VolumeUp},
+
+		// Navigation keys.
+		evdev.KEY_PAGEUP:   {Label: "Previous", Action: sonotui.Prev},
+		evdev.KEY_PAGEDOWN: {Label: "Next", Action: sonotui.Next},
+
+		// Numpad volume.
+		evdev.KEY_KPMINUS: {Label: "Volume Down", Action: sonotui.VolumeDown},
+		evdev.KEY_KPPLUS:  {Label: "Volume Up", Action: sonotui.VolumeUp},
+
+		// Numpad numbers — all play/pause.
+		evdev.KEY_KP0: {Label: "Play/Pause", Action: playPause},
+		evdev.KEY_KP1: {Label: "Play/Pause", Action: playPause},
+		evdev.KEY_KP2: {Label: "Play/Pause", Action: playPause},
+		evdev.KEY_KP3: {Label: "Play/Pause", Action: playPause},
+		evdev.KEY_KP4: {Label: "Play/Pause", Action: playPause},
+		evdev.KEY_KP5: {Label: "Play/Pause", Action: playPause},
+		evdev.KEY_KP6: {Label: "Play/Pause", Action: playPause},
+		evdev.KEY_KP7: {Label: "Play/Pause", Action: playPause},
+		evdev.KEY_KP8: {Label: "Play/Pause", Action: playPause},
+		evdev.KEY_KP9: {Label: "Play/Pause", Action: playPause},
 	}
 }
 

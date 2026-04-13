@@ -76,6 +76,9 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 	ticker := time.NewTicker(config.VisualizerFrameInterval)
 	defer ticker.Stop()
 
+	// Render an initial frame immediately so the mode indicator shows on entry.
+	renderFrame(smoothed, transport)
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -98,10 +101,8 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 				for i := 0; i < numBars; i++ {
 					bands[i] = lastFrame.Bands[i]
 				}
-			} else if transport == "PAUSED_PLAYBACK" {
-				// Keep smoothed values frozen (don't update bands)
 			} else {
-				// Stopped or no data — decay toward zero.
+				// Paused, stopped, or no data — decay toward zero.
 				for i := range bands {
 					bands[i] *= 0.85
 					if bands[i] < 0.01 {
@@ -152,14 +153,12 @@ func renderFrame(bars []float64, transport string) {
 // drawNumpadIcon overlays pause/play icon on the numpad area.
 func drawNumpadIcon(matrix *[razer.MatrixRows][razer.MatrixCols][3]byte, transport string) {
 	color := config.ColorNumpadIcon
-	switch transport {
-	case "PLAYING":
-		// Play: keys 9,8,7 + 5 → vertical bar + offset point on wall
+	if transport == "PLAYING" {
 		for _, pos := range config.NumpadPlay {
 			matrix[pos[0]][pos[1]] = color
 		}
-	case "PAUSED_PLAYBACK":
-		// Pause: keys 9,8,7 + 3,2,1 → two vertical bars on wall
+	} else {
+		// Paused, stopped, or initial — show pause icon.
 		for _, pos := range config.NumpadPause {
 			matrix[pos[0]][pos[1]] = color
 		}

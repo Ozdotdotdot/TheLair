@@ -53,12 +53,12 @@ var (
 	}
 
 	// Mode indicator: left-edge keys (bottom of wall when mounted vertically).
-	// `, Tab, CapsLock, LShift, LCtrl — all at column 0, rows 1-5.
+	// `, Tab, CapsLock, LShift, LCtrl — column 1, rows 1-5.
 	MusicModeIndicator = [][2]int{
-		{1, 0}, // `
-		{2, 0}, // Tab
-		{3, 0}, // CapsLock
-		{4, 0}, // LShift
-		{5, 0}, // LCtrl
+		{1, 1}, // `
+		{2, 1}, // Tab
+		{3, 1}, // CapsLock
+		{4, 1}, // LShift
+		{5, 1}, // LCtrl
 	}
 )

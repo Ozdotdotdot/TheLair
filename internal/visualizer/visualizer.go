@@ -67,10 +67,12 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 	defer running.Store(false)
 
 	var (
-		bands     = make([]float64, numBars)
-		smoothed  = make([]float64, numBars)
-		transport = "STOPPED"
-		lastFrame sonotui.SpectrumFrame
+		bands        = make([]float64, numBars)
+		smoothed     = make([]float64, numBars)
+		prevSmoothed = make([]float64, numBars)
+		transport    = "STOPPED"
+		prevTransport = "STOPPED"
+		lastFrame    sonotui.SpectrumFrame
 	)
 
 	ticker := time.NewTicker(config.VisualizerFrameInterval)
@@ -123,7 +125,21 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 			smoothed[i] += (bands[i] - smoothed[i]) * config.VisualizerSmoothing
 		}
 
-		renderFrame(smoothed, transport)
+		// Skip render if nothing visually changed.
+		changed := transport != prevTransport
+		if !changed {
+			for i := range smoothed {
+				if math.Abs(smoothed[i]-prevSmoothed[i]) > 0.005 {
+					changed = true
+					break
+				}
+			}
+		}
+		if changed {
+			copy(prevSmoothed, smoothed)
+			prevTransport = transport
+			renderFrame(smoothed, transport)
+		}
 	}
 }
 
@@ -139,9 +155,10 @@ func renderFrame(bars []float64, transport string) {
 		}
 
 		for col := config.VisualizerColStart; col < config.VisualizerColStart+height && col <= config.VisualizerColEnd; col++ {
-			// Gradient: lerp from base color (bottom) to peak color (top).
-			t := float64(col-config.VisualizerColStart) / float64(config.VisualizerMaxHeight)
-			matrix[row][col] = lerpColor(config.ColorBarBase, config.ColorBarPeak, t)
+			// Gradient: integer lerp from base color (bottom) to peak color (top).
+			// tFixed: 0-256, avoids float64 conversions.
+			tFixed := (col - config.VisualizerColStart) * 256 / config.VisualizerMaxHeight
+			matrix[row][col] = lerpColor(config.ColorBarBase, config.ColorBarPeak, tFixed)
 		}
 	}
 
@@ -171,16 +188,18 @@ func drawNumpadIcon(matrix *[razer.MatrixRows][razer.MatrixCols][3]byte, transpo
 	}
 }
 
-func lerpColor(a, b [3]byte, t float64) [3]byte {
-	if t < 0 {
-		t = 0
+// lerpColor interpolates between two colors using fixed-point math.
+// tFixed: 0 = color a, 256 = color b.
+func lerpColor(a, b [3]byte, tFixed int) [3]byte {
+	if tFixed < 0 {
+		tFixed = 0
 	}
-	if t > 1 {
-		t = 1
+	if tFixed > 256 {
+		tFixed = 256
 	}
 	return [3]byte{
-		byte(float64(a[0]) + (float64(b[0])-float64(a[0]))*t),
-		byte(float64(a[1]) + (float64(b[1])-float64(a[1]))*t),
-		byte(float64(a[2]) + (float64(b[2])-float64(a[2]))*t),
+		byte(int(a[0]) + (int(b[0])-int(a[0]))*tFixed/256),
+		byte(int(a[1]) + (int(b[1])-int(a[1]))*tFixed/256),
+		byte(int(a[2]) + (int(b[2])-int(a[2]))*tFixed/256),
 	}
 }

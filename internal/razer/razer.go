@@ -109,8 +109,21 @@ func clearCustomMode() {
 	}
 }
 
-// prevMatrix tracks the last flushed state for diff-based updates.
-var prevMatrix [MatrixRows][MatrixCols][3]byte
+var (
+	// prevMatrix tracks the last flushed state for diff-based updates.
+	prevMatrix [MatrixRows][MatrixCols][3]byte
+	// payloadBufs are pre-allocated per-row buffers to avoid heap allocs.
+	payloadBufs [MatrixRows][3 + MatrixCols*3]byte
+)
+
+func init() {
+	// Write static header bytes into each payload buffer once.
+	for row := 0; row < MatrixRows; row++ {
+		payloadBufs[row][0] = byte(row)
+		payloadBufs[row][1] = 0
+		payloadBufs[row][2] = byte(MatrixCols - 1)
+	}
+}
 
 func FlushMatrix(matrix [MatrixRows][MatrixCols][3]byte) {
 	if instance == nil {
@@ -130,25 +143,42 @@ func FlushMatrix(matrix [MatrixRows][MatrixCols][3]byte) {
 		prevMatrix = [MatrixRows][MatrixCols][3]byte{}
 	}
 
+	// Collect which rows need updating.
+	var dirty [MatrixRows]bool
+	dirtyCount := 0
 	for row := 0; row < MatrixRows; row++ {
-		// Skip rows that haven't changed.
-		if matrix[row] == prevMatrix[row] {
-			continue
-		}
-		// payload = [row, startCol, endCol, r0,g0,b0, r1,g1,b1, ...]
-		payload := make([]byte, 3+MatrixCols*3)
-		payload[0] = byte(row)
-		payload[1] = 0
-		payload[2] = byte(MatrixCols - 1)
-		for col := 0; col < MatrixCols; col++ {
-			payload[3+col*3] = matrix[row][col][0]
-			payload[3+col*3+1] = matrix[row][col][1]
-			payload[3+col*3+2] = matrix[row][col][2]
-		}
-		if err := instance.obj().Call(ifaceChroma+".setKeyRow", 0, payload).Err; err != nil {
-			fmt.Printf("[razer] setKeyRow row %d failed: %v\n", row, err)
+		if matrix[row] != prevMatrix[row] {
+			dirty[row] = true
+			dirtyCount++
+			// Write RGB data into pre-allocated buffer.
+			for col := 0; col < MatrixCols; col++ {
+				payloadBufs[row][3+col*3] = matrix[row][col][0]
+				payloadBufs[row][3+col*3+1] = matrix[row][col][1]
+				payloadBufs[row][3+col*3+2] = matrix[row][col][2]
+			}
 		}
 	}
+
+	if dirtyCount == 0 {
+		return
+	}
+
+	// Send all dirty rows concurrently. dbus.Conn is safe for concurrent calls.
+	var wg sync.WaitGroup
+	for row := 0; row < MatrixRows; row++ {
+		if !dirty[row] {
+			continue
+		}
+		wg.Add(1)
+		go func(r int) {
+			defer wg.Done()
+			payload := payloadBufs[r][:]
+			if err := instance.obj().Call(ifaceChroma+".setKeyRow", 0, payload).Err; err != nil {
+				fmt.Printf("[razer] setKeyRow row %d failed: %v\n", r, err)
+			}
+		}(row)
+	}
+	wg.Wait()
 
 	prevMatrix = matrix
 }

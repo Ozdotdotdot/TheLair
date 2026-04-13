@@ -17,8 +17,8 @@ const (
 
 	// Visualizer settings.
 	// On the wall (keyboard vertical, left side down), columns run bottom→top.
-	VisualizerFrameInterval = 50 * time.Millisecond // 20 Hz, matches spectrum endpoint
-	VisualizerSmoothing     = 0.35                  // lerp factor per frame (0=frozen, 1=instant)
+	VisualizerFrameInterval = 33 * time.Millisecond // ~30fps — renders faster than spectrum updates for smoother transitions
+	VisualizerSmoothing     = 0.75                  // lerp factor per frame (0=frozen, 1=instant)
 	VisualizerColStart      = 1                     // first column for bars (skip col 0 / edge keys)
 	VisualizerColEnd        = 13                    // last column for bars (main alpha section)
 	VisualizerMaxHeight     = VisualizerColEnd - VisualizerColStart + 1 // 13 levels per bar

@@ -37,9 +37,10 @@ const (
 )
 
 type Device struct {
-	conn *dbus.Conn
-	path dbus.ObjectPath
-	mu   sync.Mutex
+	conn       *dbus.Conn
+	path       dbus.ObjectPath
+	mu         sync.Mutex
+	customMode bool // true when setCustom has been called and no other mode has replaced it
 }
 
 var instance *Device
@@ -88,16 +89,28 @@ func SetBrightness(level byte) {
 }
 
 func Static(r, g, b byte) {
+	clearCustomMode()
 	call(ifaceChroma+".setStatic", r, g, b)
 }
 
 func Breathing(r, g, b byte) {
+	clearCustomMode()
 	call(ifaceChroma+".setBreathSingle", r, g, b)
 }
 
 func Off() {
+	clearCustomMode()
 	call(ifaceChroma+".setNone")
 }
+
+func clearCustomMode() {
+	if instance != nil {
+		instance.customMode = false
+	}
+}
+
+// prevMatrix tracks the last flushed state for diff-based updates.
+var prevMatrix [MatrixRows][MatrixCols][3]byte
 
 func FlushMatrix(matrix [MatrixRows][MatrixCols][3]byte) {
 	if instance == nil {
@@ -106,12 +119,22 @@ func FlushMatrix(matrix [MatrixRows][MatrixCols][3]byte) {
 	instance.mu.Lock()
 	defer instance.mu.Unlock()
 
-	if err := instance.obj().Call(ifaceChroma+".setCustom", 0).Err; err != nil {
-		fmt.Printf("[razer] setCustom failed: %v\n", err)
-		return
+	// Only call setCustom if we're not already in custom mode.
+	if !instance.customMode {
+		if err := instance.obj().Call(ifaceChroma+".setCustom", 0).Err; err != nil {
+			fmt.Printf("[razer] setCustom failed: %v\n", err)
+			return
+		}
+		instance.customMode = true
+		// Force full flush on mode entry by zeroing prevMatrix.
+		prevMatrix = [MatrixRows][MatrixCols][3]byte{}
 	}
 
 	for row := 0; row < MatrixRows; row++ {
+		// Skip rows that haven't changed.
+		if matrix[row] == prevMatrix[row] {
+			continue
+		}
 		// payload = [row, startCol, endCol, r0,g0,b0, r1,g1,b1, ...]
 		payload := make([]byte, 3+MatrixCols*3)
 		payload[0] = byte(row)
@@ -126,4 +149,6 @@ func FlushMatrix(matrix [MatrixRows][MatrixCols][3]byte) {
 			fmt.Printf("[razer] setKeyRow row %d failed: %v\n", row, err)
 		}
 	}
+
+	prevMatrix = matrix
 }

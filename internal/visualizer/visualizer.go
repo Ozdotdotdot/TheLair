@@ -83,41 +83,47 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 		select {
 		case <-ctx.Done():
 			return
-		case frame, ok := <-spectrumCh:
-			if ok {
-				lastFrame = frame
-			}
-		case state, ok := <-stateCh:
-			if ok {
-				transport = state.Transport
-			}
 		case <-ticker.C:
-			if paused.Load() {
-				continue
-			}
-
-			// Update bands from latest spectrum frame.
-			if lastFrame.Playing && len(lastFrame.Bands) >= numBars {
-				for i := 0; i < numBars; i++ {
-					bands[i] = lastFrame.Bands[i]
-				}
-			} else {
-				// Paused, stopped, or no data — decay toward zero.
-				for i := range bands {
-					bands[i] *= 0.85
-					if bands[i] < 0.01 {
-						bands[i] = 0
-					}
-				}
-			}
-
-			// Smooth the bars for fluid motion.
-			for i := range smoothed {
-				smoothed[i] += (bands[i] - smoothed[i]) * config.VisualizerSmoothing
-			}
-
-			renderFrame(smoothed, transport)
 		}
+
+		if paused.Load() {
+			continue
+		}
+
+		// Drain latest data from channels non-blockingly.
+		for {
+			select {
+			case frame := <-spectrumCh:
+				lastFrame = frame
+			case state := <-stateCh:
+				transport = state.Transport
+			default:
+				goto render
+			}
+		}
+	render:
+
+		// Update bands from latest spectrum frame.
+		if lastFrame.Playing && len(lastFrame.Bands) >= numBars {
+			for i := 0; i < numBars; i++ {
+				bands[i] = lastFrame.Bands[i]
+			}
+		} else {
+			// Paused, stopped, or no data — decay toward zero.
+			for i := range bands {
+				bands[i] *= 0.85
+				if bands[i] < 0.01 {
+					bands[i] = 0
+				}
+			}
+		}
+
+		// Smooth the bars for fluid motion.
+		for i := range smoothed {
+			smoothed[i] += (bands[i] - smoothed[i]) * config.VisualizerSmoothing
+		}
+
+		renderFrame(smoothed, transport)
 	}
 }
 

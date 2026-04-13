@@ -230,9 +230,10 @@ func PollSpectrum(ctx context.Context, bands int, interval time.Duration) <-chan
 				start = time.Now()
 			}
 
-			// If the request was very fast, sleep a bit to avoid busy-spinning.
-			if rtt := time.Since(reqStart); rtt < interval {
-				time.Sleep(interval - rtt)
+			// If the request was very fast, sleep minimally to avoid busy-spinning.
+			// The server ticks at 60Hz (~16ms), so RTT alone usually paces us.
+			if rtt := time.Since(reqStart); rtt < 2*time.Millisecond {
+				time.Sleep(2 * time.Millisecond)
 			}
 		}
 	}()

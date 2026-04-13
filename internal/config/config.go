@@ -17,7 +17,7 @@ const (
 
 	// Visualizer settings.
 	// On the wall (keyboard vertical, left side down), columns run bottom→top.
-	VisualizerFrameInterval = 33 * time.Millisecond // ~30fps — renders faster than spectrum updates for smoother transitions
+	VisualizerFrameInterval = 16 * time.Millisecond // ~60fps — matches sonotui's 60Hz FFT tick rate
 	VisualizerSmoothing     = 0.75                  // lerp factor per frame (0=frozen, 1=instant)
 	VisualizerColStart      = 1                     // first column for bars (skip col 0 / edge keys)
 	VisualizerColEnd        = 13                    // last column for bars (main alpha section)

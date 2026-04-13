@@ -67,6 +67,7 @@ func (m *MusicMode) OnEnter() {
 	spectrumCh := sonotui.PollSpectrum(ctx, config.SpectrumBands, config.VisualizerFrameInterval)
 	stateCh := sonotui.Subscribe(ctx)
 
+	visualizer.OnTransport(SetTransport)
 	visualizer.Start(spectrumCh, stateCh)
 }
 

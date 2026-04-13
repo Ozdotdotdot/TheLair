@@ -26,11 +26,19 @@ const numBars = 5 // rows 1-5
 var barRows = [numBars]int{5, 4, 3, 2, 1}
 
 var (
-	mu      sync.Mutex
-	cancel  context.CancelFunc
-	paused  atomic.Bool
-	running atomic.Bool
+	mu              sync.Mutex
+	cancel          context.CancelFunc
+	paused          atomic.Bool
+	running         atomic.Bool
+	onTransportFunc func(string) // called when transport state changes
 )
+
+// OnTransport registers a callback invoked when transport state changes.
+func OnTransport(fn func(string)) {
+	mu.Lock()
+	onTransportFunc = fn
+	mu.Unlock()
+}
 
 // Start begins the visualizer render loop. Call Stop to terminate.
 func Start(spectrumCh <-chan sonotui.SpectrumFrame, stateCh <-chan sonotui.PlayerState) {
@@ -100,7 +108,12 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 			case frame := <-spectrumCh:
 				lastFrame = frame
 			case state := <-stateCh:
-				transport = state.Transport
+				if state.Transport != transport {
+					transport = state.Transport
+					if fn := onTransportFunc; fn != nil {
+						fn(transport)
+					}
+				}
 			default:
 				goto render
 			}

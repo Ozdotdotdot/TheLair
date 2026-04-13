@@ -17,9 +17,11 @@ type Macro struct {
 type Mode interface {
 	Name() string
 	Macros() map[evdev.EvCode]Macro
-	OnEnter()      // called when switching TO this mode
-	OnExit()       // called when leaving this mode
-	RestoreState() // return keyboard to this mode's resting visual state
+	OnEnter()              // called when switching TO this mode
+	OnExit()               // called when leaving this mode
+	RestoreState()         // return keyboard to this mode's resting visual state
+	IdleEnabled() bool     // whether the idle timeout applies in this mode
+	SuccessAnimation() bool // whether to play chevron animation on macro success
 }
 
 var (

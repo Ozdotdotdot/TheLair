@@ -28,3 +28,6 @@ func (h *HomeMode) OnExit() {}
 func (h *HomeMode) RestoreState() {
 	animations.SetActive()
 }
+
+func (h *HomeMode) IdleEnabled() bool      { return true }
+func (h *HomeMode) SuccessAnimation() bool { return true }

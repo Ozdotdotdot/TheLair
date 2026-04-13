@@ -80,7 +80,7 @@ func main() {
 		for {
 			time.Sleep(30 * time.Second)
 			elapsed := time.Since(time.Unix(0, lastActivity.Load()))
-			if !isIdle.Load() && elapsed > config.IdleTimeout {
+			if !isIdle.Load() && elapsed > config.IdleTimeout && modes.Current().IdleEnabled() {
 				isIdle.Store(true)
 				if !lightsKilled.Load() && !haUnreachable.Load() {
 					animations.SetIdle()
@@ -197,7 +197,9 @@ func main() {
 		}
 
 		if success {
-			animations.ChevronSuccess(restore)
+			if modes.Current().SuccessAnimation() {
+				animations.ChevronSuccess(restore)
+			}
 		} else {
 			animations.ErrorFlash(restore)
 		}

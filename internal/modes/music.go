@@ -87,6 +87,9 @@ func (m *MusicMode) RestoreState() {
 	}
 }
 
+func (m *MusicMode) IdleEnabled() bool      { return false }
+func (m *MusicMode) SuccessAnimation() bool { return false }
+
 // showModeIndicator draws only the left-edge indicator strip, rest dark.
 func showModeIndicator() {
 	var matrix [razer.MatrixRows][razer.MatrixCols][3]byte

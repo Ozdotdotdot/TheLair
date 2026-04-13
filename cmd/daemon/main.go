@@ -53,7 +53,14 @@ var macros = map[evdev.EvCode]macro{
 		label:  "Toggle Lights",
 		action: actions.ToggleLights,
 	},
-	// evdev.KEY_F2: { label: "Movie Mode", action: actions.MovieMode },
+	evdev.KEY_1: {
+		label:  "Toggle Desk Lamp",
+		action: actions.ToggleDesk,
+	},
+	evdev.KEY_2: {
+		label:  "Toggle Hanging Lamp",
+		action: actions.ToggleHanging,
+	},
 }
 
 var modifierCodes = map[evdev.EvCode]bool{

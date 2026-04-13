@@ -31,19 +31,23 @@ func HealthCheckURL() string {
 	return u.String()
 }
 
-// ToggleLights sends a GET to the Home Assistant webhook.
+// toggleWebhook sends a GET to a Home Assistant webhook URL from an env var.
 // Returns true on success (2xx response).
-func ToggleLights() bool {
-	url := os.Getenv("HA_LIGHT_TOGGLE_URL")
+func toggleWebhook(envVar string) bool {
+	url := os.Getenv(envVar)
 	if url == "" {
-		fmt.Println("[actions] HA_LIGHT_TOGGLE_URL not set")
+		fmt.Printf("[actions] %s not set\n", envVar)
 		return false
 	}
 	resp, err := client.Get(url)
 	if err != nil {
-		fmt.Printf("[actions] light toggle failed: %v\n", err)
+		fmt.Printf("[actions] %s failed: %v\n", envVar, err)
 		return false
 	}
 	defer resp.Body.Close()
 	return resp.StatusCode >= 200 && resp.StatusCode < 300
 }
+
+func ToggleLights() bool  { return toggleWebhook("HA_LIGHT_TOGGLE_URL") }
+func ToggleDesk() bool    { return toggleWebhook("HA_DESK_TOGGLE_URL") }
+func ToggleHanging() bool { return toggleWebhook("HA_HANGING_TOGGLE_URL") }

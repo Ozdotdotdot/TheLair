@@ -2,6 +2,7 @@ package visualizer
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"sync"
 	"sync/atomic"
@@ -67,12 +68,13 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 	defer running.Store(false)
 
 	var (
-		bands        = make([]float64, numBars)
-		smoothed     = make([]float64, numBars)
-		prevSmoothed = make([]float64, numBars)
-		transport    = "STOPPED"
-		prevTransport = "STOPPED"
-		lastFrame    sonotui.SpectrumFrame
+		bands     = make([]float64, numBars)
+		smoothed  = make([]float64, numBars)
+		transport = "STOPPED"
+		lastFrame sonotui.SpectrumFrame
+		// Frame rate tracking.
+		frameCount int
+		fpsStart   = time.Now()
 	)
 
 	ticker := time.NewTicker(config.VisualizerFrameInterval)
@@ -125,20 +127,17 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 			smoothed[i] += (bands[i] - smoothed[i]) * config.VisualizerSmoothing
 		}
 
-		// Skip render if nothing visually changed.
-		changed := transport != prevTransport
-		if !changed {
-			for i := range smoothed {
-				if math.Abs(smoothed[i]-prevSmoothed[i]) > 0.005 {
-					changed = true
-					break
-				}
-			}
-		}
-		if changed {
-			copy(prevSmoothed, smoothed)
-			prevTransport = transport
-			renderFrame(smoothed, transport)
+		renderStart := time.Now()
+		renderFrame(smoothed, transport)
+		renderDur := time.Since(renderStart)
+
+		frameCount++
+		if elapsed := time.Since(fpsStart); elapsed >= 5*time.Second {
+			fmt.Printf("[visualizer] render: %.1f fps (avg flush: %dms)\n",
+				float64(frameCount)/elapsed.Seconds(),
+				int(renderDur.Milliseconds()))
+			frameCount = 0
+			fpsStart = time.Now()
 		}
 	}
 }

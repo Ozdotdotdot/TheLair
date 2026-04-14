@@ -20,6 +20,7 @@ func (h *HomeMode) Macros() map[evdev.EvCode]Macro {
 		evdev.KEY_2:  {Label: "Toggle Hanging Lamp", Action: actions.ToggleHanging},
 
 		// Scenes.
+		evdev.KEY_F2: {Label: "Leaving", Action: activateLeaving},
 		evdev.KEY_F3: {Label: "Focus Mood", Action: activateFocus},
 		evdev.KEY_F4: {Label: "Sexy Time", Action: activateSexyTime},
 	}
@@ -43,6 +44,10 @@ func (h *HomeMode) RestoreState() {
 
 func (h *HomeMode) IdleEnabled() bool      { return !scenes.IsActive() }
 func (h *HomeMode) SuccessAnimation() bool { return !scenes.IsActive() }
+
+func activateLeaving() bool {
+	return scenes.Activate(scenes.Leaving)
+}
 
 func activateFocus() bool {
 	// Fire-and-forget: don't block the event loop while sonotui clears

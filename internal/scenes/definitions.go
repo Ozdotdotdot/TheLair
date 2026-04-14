@@ -10,6 +10,16 @@ import (
 	"github.com/ozdotdotdot/TheLair/internal/sonotui"
 )
 
+var Leaving = &Scene{
+	Name: "Leaving",
+	Setup: func() bool {
+		actions.LightsOff()
+		time.Sleep(300 * time.Millisecond)
+		sonotui.Pause()
+		return true
+	},
+}
+
 var SexyTime = &Scene{
 	Name:       "Sexy Time",
 	AutoReturn: true,

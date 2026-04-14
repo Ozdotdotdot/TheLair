@@ -45,7 +45,10 @@ func (h *HomeMode) IdleEnabled() bool      { return !scenes.IsActive() }
 func (h *HomeMode) SuccessAnimation() bool { return !scenes.IsActive() }
 
 func activateFocus() bool {
-	return sonotui.PlayMood("focus")
+	// Fire-and-forget: don't block the event loop while sonotui clears
+	// the queue and adds tracks (can take several seconds).
+	go sonotui.PlayMood("focus")
+	return true
 }
 
 func activateSexyTime() bool {

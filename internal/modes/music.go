@@ -109,11 +109,19 @@ func showModeIndicator() {
 }
 
 // playPause toggles based on last known transport state.
-// If we can't determine state, try pause first (more likely playing).
+// If transport is ambiguous (TRANSITIONING, empty), refresh from the API.
 var lastTransport string
 
 func playPause() bool {
-	if lastTransport == "PLAYING" {
+	t := lastTransport
+	if t != "PLAYING" && t != "PAUSED_PLAYBACK" && t != "STOPPED" {
+		// Stale or transitioning — fetch fresh state.
+		if status, err := sonotui.FetchStatus(); err == nil {
+			t = status.Transport
+			lastTransport = t
+		}
+	}
+	if t == "PLAYING" {
 		return sonotui.Pause()
 	}
 	return sonotui.Play()

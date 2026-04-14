@@ -92,13 +92,14 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 	defer running.Store(false)
 
 	var (
-		bands      = make([]float64, numBars)
-		smoothed   = make([]float64, numBars)
-		transport  = "STOPPED"
-		lastFrame  sonotui.SpectrumFrame
-		lastVolume int
-		elapsed    int
-		duration   int
+		bands        = make([]float64, numBars)
+		smoothed     = make([]float64, numBars)
+		transport    = "STOPPED"
+		lastFrame    sonotui.SpectrumFrame
+		lastVolume   int
+		lastTrackGen int
+		elapsed      int
+		duration     int
 		// Frame rate tracking.
 		frameCount int
 		fpsStart   = time.Now()
@@ -151,6 +152,19 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 			}
 		}
 	render:
+
+		// On track change, flush bars so we get a clean visual reset.
+		if lastFrame.TrackGen != lastTrackGen && lastTrackGen != 0 {
+			lastTrackGen = lastFrame.TrackGen
+			for i := range bands {
+				bands[i] = 0
+			}
+			for i := range smoothed {
+				smoothed[i] = 0
+			}
+		} else {
+			lastTrackGen = lastFrame.TrackGen
+		}
 
 		// Update bands from latest spectrum frame.
 		if lastFrame.Playing && len(lastFrame.Bands) >= numBars {

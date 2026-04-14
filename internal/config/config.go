@@ -67,10 +67,10 @@ var (
 
 	// Progress bar: F5-F12 on row 0 (top→bottom on wall = left→right in matrix).
 	ColorProgressBar = [3]byte{255, 255, 255} // white
-	// Standard Huntsman matrix: F5(8), F6(9), F7(10), F8(11), gap(12), F9(13), F10(14), F11(15), F12(16)
+	// Huntsman matrix: F5-F12 are consecutive on row 0, columns 7-14.
 	ProgressBarPositions = [][2]int{
-		{0, 8}, {0, 9}, {0, 10}, {0, 11}, // F5-F8
-		{0, 13}, {0, 14}, {0, 15}, {0, 16}, // F9-F12
+		{0, 7}, {0, 8}, {0, 9}, {0, 10}, // F5-F8
+		{0, 11}, {0, 12}, {0, 13}, {0, 14}, // F9-F12
 	}
 
 	// Scene colors.

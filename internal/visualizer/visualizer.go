@@ -31,12 +31,20 @@ var (
 	paused          atomic.Bool
 	running         atomic.Bool
 	onTransportFunc func(string) // called when transport state changes
+	onVolumeFunc    func(int)    // called when volume changes
 )
 
 // OnTransport registers a callback invoked when transport state changes.
 func OnTransport(fn func(string)) {
 	mu.Lock()
 	onTransportFunc = fn
+	mu.Unlock()
+}
+
+// OnVolume registers a callback invoked when volume changes.
+func OnVolume(fn func(int)) {
+	mu.Lock()
+	onVolumeFunc = fn
 	mu.Unlock()
 }
 
@@ -76,10 +84,11 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 	defer running.Store(false)
 
 	var (
-		bands     = make([]float64, numBars)
-		smoothed  = make([]float64, numBars)
-		transport = "STOPPED"
-		lastFrame sonotui.SpectrumFrame
+		bands      = make([]float64, numBars)
+		smoothed   = make([]float64, numBars)
+		transport  = "STOPPED"
+		lastFrame  sonotui.SpectrumFrame
+		lastVolume int
 		// Frame rate tracking.
 		frameCount int
 		fpsStart   = time.Now()
@@ -112,6 +121,12 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 					transport = state.Transport
 					if fn := onTransportFunc; fn != nil {
 						fn(transport)
+					}
+				}
+				if state.Volume != lastVolume {
+					lastVolume = state.Volume
+					if fn := onVolumeFunc; fn != nil {
+						fn(lastVolume)
 					}
 				}
 			default:
@@ -177,6 +192,11 @@ func renderFrame(bars []float64, transport string) {
 	// Draw mode indicator strip (bottom of wall = column 0, left-edge keys).
 	for _, pos := range config.MusicModeIndicator {
 		matrix[pos[0]][pos[1]] = config.ColorMusicMode
+	}
+
+	// Draw action keys in green (PgUp, PgDn, +, -).
+	for _, pos := range config.ActionKeyPositions {
+		matrix[pos[0]][pos[1]] = config.ColorActionKey
 	}
 
 	// Draw numpad icon based on transport state.

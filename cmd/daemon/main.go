@@ -15,6 +15,7 @@ import (
 	"github.com/ozdotdotdot/TheLair/internal/actions"
 	"github.com/ozdotdotdot/TheLair/internal/animations"
 	"github.com/ozdotdotdot/TheLair/internal/config"
+	"github.com/ozdotdotdot/TheLair/internal/leds"
 	"github.com/ozdotdotdot/TheLair/internal/modes"
 	"github.com/ozdotdotdot/TheLair/internal/razer"
 	"github.com/ozdotdotdot/TheLair/internal/sonotui"
@@ -59,6 +60,7 @@ func main() {
 	if err := dev.Grab(); err != nil {
 		log.Fatalf("[main] evdev grab: %v", err)
 	}
+	leds.Init(dev)
 
 	// Graceful shutdown — restore keyboard state before exit.
 	sigs := make(chan os.Signal, 1)
@@ -66,6 +68,7 @@ func main() {
 	go func() {
 		<-sigs
 		fmt.Println("[main] shutting down")
+		leds.Cleanup()
 		dev.Ungrab()
 		modes.Current().OnExit()
 		animations.SetActive()

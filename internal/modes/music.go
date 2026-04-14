@@ -7,6 +7,7 @@ import (
 	evdev "github.com/holoplot/go-evdev"
 	"github.com/ozdotdotdot/TheLair/internal/actions"
 	"github.com/ozdotdotdot/TheLair/internal/config"
+	"github.com/ozdotdotdot/TheLair/internal/leds"
 	"github.com/ozdotdotdot/TheLair/internal/razer"
 	"github.com/ozdotdotdot/TheLair/internal/sonotui"
 	"github.com/ozdotdotdot/TheLair/internal/visualizer"
@@ -68,11 +69,13 @@ func (m *MusicMode) OnEnter() {
 	stateCh := sonotui.Subscribe(ctx)
 
 	visualizer.OnTransport(SetTransport)
+	visualizer.OnVolume(leds.SetVolumeMeter)
 	visualizer.Start(spectrumCh, stateCh)
 }
 
 func (m *MusicMode) OnExit() {
 	visualizer.Stop()
+	leds.Cleanup()
 	if m.cancel != nil {
 		m.cancel()
 		m.cancel = nil

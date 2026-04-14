@@ -61,4 +61,14 @@ var (
 		{4, 1}, // LShift
 		{5, 1}, // LCtrl
 	}
+
+	// Action keys lit green in music mode to signal interactive controls.
+	ColorActionKey = [3]byte{0, 255, 0} // green
+	// Positions are approximate — may need tuning via discover tool.
+	ActionKeyPositions = [][2]int{
+		{1, 16}, // PgUp (nav cluster)
+		{2, 16}, // PgDn (nav cluster)
+		{2, 21}, // Numpad +
+		{1, 21}, // Numpad -
+	}
 )

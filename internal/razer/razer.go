@@ -109,6 +109,14 @@ func clearCustomMode() {
 	}
 }
 
+func SetMacroLED(on bool) {
+	call("razer.device.led.macromode.setMacroMode", on)
+}
+
+func SetGameModeLED(on bool) {
+	call("razer.device.led.gamemode.setGameMode", on)
+}
+
 var (
 	// prevMatrix tracks the last flushed state for diff-based updates.
 	prevMatrix [MatrixRows][MatrixCols][3]byte

@@ -127,7 +127,7 @@ func post(path string, body interface{}) bool {
 // returned channel. It auto-reconnects with backoff on failure.
 // Close the context to stop.
 func Subscribe(ctx context.Context) <-chan PlayerState {
-	ch := make(chan PlayerState, 4)
+	ch := make(chan PlayerState, 16)
 	go func() {
 		defer close(ch)
 		backoff := time.Second

@@ -97,8 +97,7 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 		transport    = "STOPPED"
 		lastFrame    sonotui.SpectrumFrame
 		lastVolume   int
-		lastTrackGen int
-		elapsed      int
+		elapsed  int
 		duration     int
 		// Frame rate tracking.
 		frameCount int
@@ -122,11 +121,12 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 			continue
 		}
 
-		// Drain latest data from channels non-blockingly.
+		// Priority drain: always process all state events first (position,
+		// transport, volume) before spectrum frames. State events are sparse
+		// (~1/sec) while spectrum arrives at 60Hz. A single select can starve
+		// the state channel, causing the progress bar to freeze.
 		for {
 			select {
-			case frame := <-spectrumCh:
-				lastFrame = frame
 			case state := <-stateCh:
 				if state.Transport != transport {
 					transport = state.Transport
@@ -148,23 +148,19 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 					}
 				}
 			default:
+				goto drainSpectrum
+			}
+		}
+	drainSpectrum:
+		for {
+			select {
+			case frame := <-spectrumCh:
+				lastFrame = frame
+			default:
 				goto render
 			}
 		}
 	render:
-
-		// On track change, flush bars so we get a clean visual reset.
-		if lastFrame.TrackGen != lastTrackGen && lastTrackGen != 0 {
-			lastTrackGen = lastFrame.TrackGen
-			for i := range bands {
-				bands[i] = 0
-			}
-			for i := range smoothed {
-				smoothed[i] = 0
-			}
-		} else {
-			lastTrackGen = lastFrame.TrackGen
-		}
 
 		// Update bands from latest spectrum frame.
 		if lastFrame.Playing && len(lastFrame.Bands) >= numBars {

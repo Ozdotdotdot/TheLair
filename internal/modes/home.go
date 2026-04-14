@@ -1,6 +1,8 @@
 package modes
 
 import (
+	"time"
+
 	evdev "github.com/holoplot/go-evdev"
 	"github.com/ozdotdotdot/TheLair/internal/actions"
 	"github.com/ozdotdotdot/TheLair/internal/animations"
@@ -46,7 +48,11 @@ func (h *HomeMode) IdleEnabled() bool      { return !scenes.IsActive() }
 func (h *HomeMode) SuccessAnimation() bool { return !scenes.IsActive() }
 
 func activateLeaving() bool {
-	return scenes.Activate(scenes.Leaving)
+	// Fire-and-forget: lights off + pause music, no persistent scene state.
+	actions.LightsOff()
+	time.Sleep(300 * time.Millisecond)
+	sonotui.Pause()
+	return true
 }
 
 func activateFocus() bool {

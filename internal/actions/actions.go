@@ -51,3 +51,4 @@ func toggleWebhook(envVar string) bool {
 func ToggleLights() bool  { return toggleWebhook("HA_LIGHT_TOGGLE_URL") }
 func ToggleDesk() bool    { return toggleWebhook("HA_DESK_TOGGLE_URL") }
 func ToggleHanging() bool { return toggleWebhook("HA_HANGING_TOGGLE_URL") }
+func LightsOff() bool     { return toggleWebhook("HA_LIGHTS_OFF_URL") }

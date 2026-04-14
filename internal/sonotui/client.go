@@ -94,6 +94,10 @@ func VolumeDown() bool {
 	return post("/volume/relative", map[string]int{"delta": -5})
 }
 
+func PlayMood(name string) bool {
+	return post("/moods/"+name+"/play", nil)
+}
+
 func post(path string, body interface{}) bool {
 	if baseURL == "" {
 		fmt.Println("[sonotui] not configured")

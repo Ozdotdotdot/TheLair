@@ -64,6 +64,9 @@ var (
 
 	// Action keys lit green in music mode to signal interactive controls.
 	ColorActionKey = [3]byte{0, 255, 0} // green
+
+	// Scene colors.
+	ColorSceneSexyTime = [3]byte{255, 0, 0} // red for sexy-time breathing
 	// Positions are approximate — may need tuning via discover tool.
 	ActionKeyPositions = [][2]int{
 		{1, 17}, // PgUp (nav cluster)

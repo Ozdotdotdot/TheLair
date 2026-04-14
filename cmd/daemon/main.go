@@ -18,6 +18,7 @@ import (
 	"github.com/ozdotdotdot/TheLair/internal/leds"
 	"github.com/ozdotdotdot/TheLair/internal/modes"
 	"github.com/ozdotdotdot/TheLair/internal/razer"
+	"github.com/ozdotdotdot/TheLair/internal/scenes"
 	"github.com/ozdotdotdot/TheLair/internal/sonotui"
 )
 
@@ -155,8 +156,13 @@ func main() {
 
 		// --- Global keys (mode-independent) ---
 
-		// ESC: kill switch
+		// ESC: exit scene first, then kill switch
 		if event.Code == evdev.KEY_ESC {
+			if scenes.IsActive() {
+				fmt.Println("[main] macro: Exit Scene")
+				scenes.Deactivate()
+				continue
+			}
 			fmt.Println("[main] macro: Kill Switch")
 			if lightsKilled.Load() {
 				lightsKilled.Store(false)

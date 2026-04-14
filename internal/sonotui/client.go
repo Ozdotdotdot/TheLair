@@ -46,6 +46,39 @@ func Init() {
 // Available reports whether a sonotui URL is configured.
 func Available() bool { return baseURL != "" }
 
+// FetchStatus returns the current playback state from GET /status.
+func FetchStatus() (PlayerState, error) {
+	var state PlayerState
+	if baseURL == "" {
+		return state, fmt.Errorf("not configured")
+	}
+	resp, err := client.Get(baseURL + "/status")
+	if err != nil {
+		return state, err
+	}
+	defer resp.Body.Close()
+	var raw struct {
+		Transport string `json:"transport"`
+		Volume    int    `json:"volume"`
+		Elapsed   int    `json:"elapsed"`
+		Duration  int    `json:"duration"`
+		Track     struct {
+			Title  string `json:"title"`
+			Artist string `json:"artist"`
+		} `json:"track"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
+		return state, err
+	}
+	state.Transport = raw.Transport
+	state.Volume = raw.Volume
+	state.Elapsed = raw.Elapsed
+	state.Duration = raw.Duration
+	state.Title = raw.Track.Title
+	state.Artist = raw.Track.Artist
+	return state, nil
+}
+
 // --- Transport actions (all return success bool) ---
 
 func Play() bool  { return post("/play", nil) }

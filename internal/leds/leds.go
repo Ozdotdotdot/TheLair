@@ -3,7 +3,6 @@ package leds
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	evdev "github.com/holoplot/go-evdev"
 	"github.com/ozdotdotdot/TheLair/internal/razer"
@@ -11,14 +10,14 @@ import (
 
 // The 5 indicator LEDs, ordered bottom-to-top on the wall:
 //   Caps Lock (C) → Num Lock (1) → Scroll Lock (S) → Macro (M) → Game Mode (G)
-// Caps/Num/Scroll are toggled via evdev key injection.
-// Macro/Game Mode are toggled via OpenRazer D-Bus.
+// Caps/Num/Scroll are controlled via EV_LED events on the primary kbd node.
+// Macro/Game Mode are controlled via OpenRazer D-Bus.
 
 var (
 	mu  sync.Mutex
 	dev *evdev.InputDevice
 
-	// Current state of each LED (to avoid redundant toggles).
+	// Current state of each LED (to avoid redundant writes).
 	capsState   bool
 	numState    bool
 	scrollState bool
@@ -26,11 +25,18 @@ var (
 	gameState   bool
 )
 
-// Init stores the evdev device for key injection.
+// Init opens the primary keyboard event node for LED control.
 func Init(d *evdev.InputDevice) {
 	mu.Lock()
 	defer mu.Unlock()
-	dev = d
+	// Open event0 (primary kbd) — the lock LEDs live here, not on event1 which we grab.
+	primary, err := evdev.Open("/dev/input/by-id/usb-Razer_Razer_Huntsman-event-kbd")
+	if err != nil {
+		fmt.Printf("[leds] failed to open primary kbd node: %v\n", err)
+		return
+	}
+	dev = primary
+	fmt.Println("[leds] ready (using primary kbd node)")
 }
 
 // SetVolumeMeter lights up 0-5 LEDs based on volume (0-100).
@@ -54,50 +60,39 @@ func SetVolumeMeter(volume int) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	setLockLED(evdev.KEY_CAPSLOCK, &capsState, level >= 1)
-	setLockLED(evdev.KEY_NUMLOCK, &numState, level >= 2)
-	setLockLED(evdev.KEY_SCROLLLOCK, &scrollState, level >= 3)
+	setLockLED(evdev.LED_CAPSL, &capsState, level >= 1)
+	setLockLED(evdev.LED_NUML, &numState, level >= 2)
+	setLockLED(evdev.LED_SCROLLL, &scrollState, level >= 3)
 	setMacro(level >= 4)
 	setGame(level >= 5)
 }
 
-// Cleanup turns off all indicator LEDs and restores lock states.
+// Cleanup turns off all indicator LEDs.
 func Cleanup() {
 	mu.Lock()
 	defer mu.Unlock()
 
-	setLockLED(evdev.KEY_CAPSLOCK, &capsState, false)
-	setLockLED(evdev.KEY_NUMLOCK, &numState, false)
-	setLockLED(evdev.KEY_SCROLLLOCK, &scrollState, false)
+	setLockLED(evdev.LED_CAPSL, &capsState, false)
+	setLockLED(evdev.LED_NUML, &numState, false)
+	setLockLED(evdev.LED_SCROLLL, &scrollState, false)
 	setMacro(false)
 	setGame(false)
 }
 
-// setLockLED toggles a lock key LED by injecting a key down+up event.
+// setLockLED writes an EV_LED event to toggle a lock indicator.
 func setLockLED(code evdev.EvCode, current *bool, want bool) {
 	if *current == want || dev == nil {
 		return
 	}
-
-	down := &evdev.InputEvent{Type: evdev.EV_KEY, Code: code, Value: 1}
-	up := &evdev.InputEvent{Type: evdev.EV_KEY, Code: code, Value: 0}
-	syn := &evdev.InputEvent{Type: evdev.EV_SYN, Code: 0, Value: 0}
-
-	if err := dev.WriteOne(down); err != nil {
-		fmt.Printf("[leds] write key down failed: %v\n", err)
+	var val int32
+	if want {
+		val = 1
+	}
+	ev := &evdev.InputEvent{Type: evdev.EV_LED, Code: code, Value: val}
+	if err := dev.WriteOne(ev); err != nil {
+		fmt.Printf("[leds] EV_LED write failed (code %d): %v\n", code, err)
 		return
 	}
-	if err := dev.WriteOne(up); err != nil {
-		fmt.Printf("[leds] write key up failed: %v\n", err)
-		return
-	}
-	if err := dev.WriteOne(syn); err != nil {
-		fmt.Printf("[leds] write syn failed: %v\n", err)
-		return
-	}
-
-	// Small delay to let the kernel process the state change.
-	time.Sleep(2 * time.Millisecond)
 	*current = want
 }
 

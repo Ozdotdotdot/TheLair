@@ -71,6 +71,12 @@ func (m *MusicMode) OnEnter() {
 	visualizer.OnTransport(SetTransport)
 	visualizer.OnVolume(leds.SetVolumeMeter)
 	visualizer.Start(spectrumCh, stateCh)
+
+	// Fetch initial state so volume meter and transport are correct immediately.
+	if status, err := sonotui.FetchStatus(); err == nil {
+		SetTransport(status.Transport)
+		leds.SetVolumeMeter(status.Volume)
+	}
 }
 
 func (m *MusicMode) OnExit() {

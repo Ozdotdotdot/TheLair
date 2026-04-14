@@ -153,12 +153,17 @@ func SetPosition(elapsed, duration int) {
 }
 
 // seekTo jumps to a proportional position in the current track.
-// segment 0 = start, segment 7 = 87.5% through.
+// Seeks to the point where the pressed key's LED lights up:
+// F5 → 1/8, F6 → 2/8, ..., F12 → 8/8 (capped at duration-1).
 func seekTo(segment int) bool {
 	if lastDuration <= 0 {
 		return false
 	}
-	target := (segment * lastDuration) / len(config.ProgressBarPositions)
+	numKeys := len(config.ProgressBarPositions)
+	target := ((segment + 1) * lastDuration) / numKeys
+	if target >= lastDuration {
+		target = lastDuration - 1
+	}
 	return sonotui.Seek(target)
 }
 

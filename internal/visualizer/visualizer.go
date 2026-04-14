@@ -30,8 +30,9 @@ var (
 	cancel          context.CancelFunc
 	paused          atomic.Bool
 	running         atomic.Bool
-	onTransportFunc func(string) // called when transport state changes
-	onVolumeFunc    func(int)    // called when volume changes
+	onTransportFunc func(string)    // called when transport state changes
+	onVolumeFunc    func(int)       // called when volume changes
+	onPositionFunc  func(int, int)  // called when position changes (elapsed, duration)
 )
 
 // OnTransport registers a callback invoked when transport state changes.
@@ -45,6 +46,13 @@ func OnTransport(fn func(string)) {
 func OnVolume(fn func(int)) {
 	mu.Lock()
 	onVolumeFunc = fn
+	mu.Unlock()
+}
+
+// OnPosition registers a callback invoked when playback position changes.
+func OnPosition(fn func(elapsed, duration int)) {
+	mu.Lock()
+	onPositionFunc = fn
 	mu.Unlock()
 }
 
@@ -89,6 +97,8 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 		transport  = "STOPPED"
 		lastFrame  sonotui.SpectrumFrame
 		lastVolume int
+		elapsed    int
+		duration   int
 		// Frame rate tracking.
 		frameCount int
 		fpsStart   = time.Now()
@@ -98,7 +108,7 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 	defer ticker.Stop()
 
 	// Render an initial frame immediately so the mode indicator shows on entry.
-	renderFrame(smoothed, transport)
+	renderFrame(smoothed, transport, elapsed, duration)
 
 	for {
 		select {
@@ -129,6 +139,13 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 						fn(lastVolume)
 					}
 				}
+				if state.Elapsed != elapsed || state.Duration != duration {
+					elapsed = state.Elapsed
+					duration = state.Duration
+					if fn := onPositionFunc; fn != nil {
+						fn(elapsed, duration)
+					}
+				}
 			default:
 				goto render
 			}
@@ -156,7 +173,7 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 		}
 
 		renderStart := time.Now()
-		renderFrame(smoothed, transport)
+		renderFrame(smoothed, transport, elapsed, duration)
 		renderDur := time.Since(renderStart)
 
 		frameCount++
@@ -170,7 +187,7 @@ func renderLoop(ctx context.Context, spectrumCh <-chan sonotui.SpectrumFrame, st
 	}
 }
 
-func renderFrame(bars []float64, transport string) {
+func renderFrame(bars []float64, transport string, elapsed, duration int) {
 	var matrix [razer.MatrixRows][razer.MatrixCols][3]byte
 
 	// Draw visualizer bars on the main section.
@@ -201,6 +218,19 @@ func renderFrame(bars []float64, transport string) {
 
 	// Draw numpad icon based on transport state.
 	drawNumpadIcon(&matrix, transport)
+
+	// Draw progress bar on function row (F5-F12).
+	if duration > 0 {
+		progress := float64(elapsed) / float64(duration)
+		litCount := int(progress * float64(len(config.ProgressBarPositions)))
+		if elapsed > 0 && litCount == 0 {
+			litCount = 1
+		}
+		for i := 0; i < litCount && i < len(config.ProgressBarPositions); i++ {
+			pos := config.ProgressBarPositions[i]
+			matrix[pos[0]][pos[1]] = config.ColorProgressBar
+		}
+	}
 
 	razer.FlushMatrix(matrix)
 }

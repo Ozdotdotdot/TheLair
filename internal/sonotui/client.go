@@ -98,6 +98,10 @@ func PlayMood(name string) bool {
 	return post("/moods/"+name+"/play", nil)
 }
 
+func Seek(seconds int) bool {
+	return post("/seek", map[string]int{"seconds": seconds})
+}
+
 func post(path string, body interface{}) bool {
 	if baseURL == "" {
 		fmt.Println("[sonotui] not configured")

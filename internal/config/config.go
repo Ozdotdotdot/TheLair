@@ -65,6 +65,14 @@ var (
 	// Action keys lit green in music mode to signal interactive controls.
 	ColorActionKey = [3]byte{0, 255, 0} // green
 
+	// Progress bar: F5-F12 on row 0 (top→bottom on wall = left→right in matrix).
+	ColorProgressBar = [3]byte{255, 255, 255} // white
+	// Standard Huntsman matrix: F5(8), F6(9), F7(10), F8(11), gap(12), F9(13), F10(14), F11(15), F12(16)
+	ProgressBarPositions = [][2]int{
+		{0, 8}, {0, 9}, {0, 10}, {0, 11}, // F5-F8
+		{0, 13}, {0, 14}, {0, 15}, {0, 16}, // F9-F12
+	}
+
 	// Scene colors.
 	ColorSceneSexyTime = [3]byte{255, 0, 0} // red for sexy-time breathing
 	// Positions are approximate — may need tuning via discover tool.

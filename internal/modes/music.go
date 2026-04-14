@@ -21,13 +21,8 @@ type MusicMode struct {
 func (m *MusicMode) Name() string { return "Music" }
 
 func (m *MusicMode) Macros() map[evdev.EvCode]Macro {
-	return map[evdev.EvCode]Macro{
+	macros := map[evdev.EvCode]Macro{
 		evdev.KEY_F1: {Label: "Toggle Lights", Action: actions.ToggleLights},
-		evdev.KEY_F5: {Label: "Play/Pause", Action: playPause},
-		evdev.KEY_F4: {Label: "Previous", Action: sonotui.Prev},
-		evdev.KEY_F6: {Label: "Next", Action: sonotui.Next},
-		evdev.KEY_F3: {Label: "Volume Down", Action: sonotui.VolumeDown},
-		evdev.KEY_F7: {Label: "Volume Up", Action: sonotui.VolumeUp},
 
 		// Navigation keys.
 		evdev.KEY_PAGEUP:   {Label: "Previous", Action: sonotui.Prev},
@@ -49,6 +44,21 @@ func (m *MusicMode) Macros() map[evdev.EvCode]Macro {
 		evdev.KEY_KP8: {Label: "Play/Pause", Action: playPause},
 		evdev.KEY_KP9: {Label: "Play/Pause", Action: playPause},
 	}
+
+	// F5-F12: progress bar seek keys.
+	seekKeys := []evdev.EvCode{
+		evdev.KEY_F5, evdev.KEY_F6, evdev.KEY_F7, evdev.KEY_F8,
+		evdev.KEY_F9, evdev.KEY_F10, evdev.KEY_F11, evdev.KEY_F12,
+	}
+	for i, key := range seekKeys {
+		idx := i
+		macros[key] = Macro{
+			Label:  fmt.Sprintf("Seek %d/8", idx),
+			Action: func() bool { return seekTo(idx) },
+		}
+	}
+
+	return macros
 }
 
 func (m *MusicMode) OnEnter() {
@@ -70,12 +80,14 @@ func (m *MusicMode) OnEnter() {
 
 	visualizer.OnTransport(SetTransport)
 	visualizer.OnVolume(leds.SetVolumeMeter)
+	visualizer.OnPosition(SetPosition)
 	visualizer.Start(spectrumCh, stateCh)
 
-	// Fetch initial state so volume meter and transport are correct immediately.
+	// Fetch initial state so volume meter, transport, and duration are correct immediately.
 	if status, err := sonotui.FetchStatus(); err == nil {
 		SetTransport(status.Transport)
 		leds.SetVolumeMeter(status.Volume)
+		SetPosition(status.Elapsed, status.Duration)
 	}
 }
 
@@ -110,7 +122,10 @@ func showModeIndicator() {
 
 // playPause toggles based on last known transport state.
 // If transport is ambiguous (TRANSITIONING, empty), refresh from the API.
-var lastTransport string
+var (
+	lastTransport string
+	lastDuration  int
+)
 
 func playPause() bool {
 	t := lastTransport
@@ -127,9 +142,24 @@ func playPause() bool {
 	return sonotui.Play()
 }
 
-// SetTransport is called from the main loop to keep play/pause toggle in sync.
+// SetTransport is called from the visualizer to keep play/pause toggle in sync.
 func SetTransport(t string) {
 	lastTransport = t
+}
+
+// SetPosition is called from the visualizer when playback position changes.
+func SetPosition(elapsed, duration int) {
+	lastDuration = duration
+}
+
+// seekTo jumps to a proportional position in the current track.
+// segment 0 = start, segment 7 = 87.5% through.
+func seekTo(segment int) bool {
+	if lastDuration <= 0 {
+		return false
+	}
+	target := (segment * lastDuration) / len(config.ProgressBarPositions)
+	return sonotui.Seek(target)
 }
 
 // PauseVisualizer temporarily pauses the visualizer for macro feedback animations.

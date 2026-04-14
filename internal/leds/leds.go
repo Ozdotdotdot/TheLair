@@ -43,15 +43,15 @@ func Init(d *evdev.InputDevice) {
 func SetVolumeMeter(volume int) {
 	var level int
 	switch {
-	case volume <= 20:
+	case volume < 1:
 		level = 0
-	case volume <= 40:
+	case volume <= 19:
 		level = 1
-	case volume <= 60:
+	case volume <= 35:
 		level = 2
-	case volume <= 80:
+	case volume <= 59:
 		level = 3
-	case volume <= 95:
+	case volume <= 85:
 		level = 4
 	default:
 		level = 5

@@ -66,8 +66,8 @@ var (
 	ColorActionKey = [3]byte{0, 255, 0} // green
 	// Positions are approximate — may need tuning via discover tool.
 	ActionKeyPositions = [][2]int{
-		{1, 16}, // PgUp (nav cluster)
-		{2, 16}, // PgDn (nav cluster)
+		{1, 17}, // PgUp (nav cluster)
+		{2, 17}, // PgDn (nav cluster)
 		{2, 21}, // Numpad +
 		{1, 21}, // Numpad -
 	}

@@ -120,6 +120,7 @@ func main() {
 				}
 			} else if !nowUnreachable && wasUnreachable {
 				haUnreachable.Store(false)
+				isIdle.Store(false)
 				log.Println("[health] HA reachable again — restoring state")
 				if !lightsKilled.Load() {
 					modes.Current().RestoreState()

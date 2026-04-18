@@ -22,7 +22,8 @@ func (m *MusicMode) Name() string { return "Music" }
 
 func (m *MusicMode) Macros() map[evdev.EvCode]Macro {
 	macros := map[evdev.EvCode]Macro{
-		evdev.KEY_F1: {Label: "Toggle Lights", Action: actions.ToggleLights},
+		evdev.KEY_F1:    {Label: "Toggle Lights", Action: actions.ToggleLights},
+		evdev.KEY_SPACE: {Label: "Toggle Lights", Action: actions.ToggleLights},
 
 		// Navigation keys.
 		evdev.KEY_PAGEUP:   {Label: "Previous", Action: sonotui.Prev},

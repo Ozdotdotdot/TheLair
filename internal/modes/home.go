@@ -17,7 +17,8 @@ func (h *HomeMode) Name() string { return "Home" }
 
 func (h *HomeMode) Macros() map[evdev.EvCode]Macro {
 	return map[evdev.EvCode]Macro{
-		evdev.KEY_F1: {Label: "Toggle Lights", Action: actions.ToggleLights},
+		evdev.KEY_F1:    {Label: "Toggle Lights", Action: actions.ToggleLights},
+		evdev.KEY_SPACE: {Label: "Toggle Lights", Action: actions.ToggleLights},
 		evdev.KEY_1:  {Label: "Toggle Desk Lamp", Action: actions.ToggleDesk},
 		evdev.KEY_2:  {Label: "Toggle Hanging Lamp", Action: actions.ToggleHanging},
 

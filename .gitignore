@@ -1,5 +1,6 @@
 # Compiled binaries
 bin/
+huntsman-panel
 
 # Go build artifacts
 *.exe

@@ -28,7 +28,7 @@ Legend:
 - Numpad: NumLk/`/`/`*`/`-` (row 1, cols 18-21), 8 (row 2, col 19), `+` (row 2, col 21), 4/5/6 (row 3, cols 18-20)
 - Nav cluster: PgUp {1,17}, PgDn {2,17}
 
-**Not yet mapped:**
+**Not yet mapped:** 
 - F1-F4 (row 0, presumably cols 3-6 or similar)
 - ESC (row 0, probably col 0 or 1)
 - Main alpha block (rows 1-4, cols 2-14)

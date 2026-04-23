@@ -24,9 +24,10 @@ A Razer Huntsman keyboard mounted on the wall, connected to a Raspberry Pi 3B+, 
 | State | Behavior |
 |-------|----------|
 | Active | Static white, full brightness |
-| Idle (10min no activity) | Slow breathing, white |
+| Idle (1min no activity) | Breathing white, ~15% brightness |
 | Macro success | Three white `>>>` chevrons sweep right |
 | Macro failure | Red flash × 3 |
+| HA unreachable | Static amber (auto-restores when HA returns) |
 | Kill switch ON | All LEDs off |
 
 ---

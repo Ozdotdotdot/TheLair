@@ -1,6 +1,8 @@
 # TheLair
 > Making my keyboard the brains to control my room.
 
+![Huntsman Panel](docs/Huntsman%20Panel.jpeg)
+
 A Razer Huntsman keyboard mounted on the wall, connected to a Raspberry Pi 3B+, functioning as a physical macro panel. No display. No terminal. Keys map to actions. RGB provides feedback. The whole thing boots headlessly and runs as a systemd user service.
 
 ---

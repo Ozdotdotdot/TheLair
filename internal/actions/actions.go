@@ -48,7 +48,9 @@ func toggleWebhook(envVar string) bool {
 	return resp.StatusCode >= 200 && resp.StatusCode < 300
 }
 
-func ToggleLights() bool  { return toggleWebhook("HA_LIGHT_TOGGLE_URL") }
-func ToggleDesk() bool    { return toggleWebhook("HA_DESK_TOGGLE_URL") }
-func ToggleHanging() bool { return toggleWebhook("HA_HANGING_TOGGLE_URL") }
-func LightsOff() bool     { return toggleWebhook("HA_LIGHTS_OFF_URL") }
+func ToggleLights() bool   { return toggleWebhook("HA_LIGHT_TOGGLE_URL") }
+func ToggleDesk() bool     { return toggleWebhook("HA_DESK_TOGGLE_URL") }
+func ToggleHanging() bool  { return toggleWebhook("HA_HANGING_TOGGLE_URL") }
+func LightsOff() bool      { return toggleWebhook("HA_LIGHTS_OFF_URL") }
+func ToggleFanLight() bool { return toggleWebhook("HA_FAN_LIGHT_TOGGLE_URL") }
+func ToggleFanPower() bool { return toggleWebhook("HA_FAN_POWER_TOGGLE_URL") }

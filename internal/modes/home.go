@@ -21,11 +21,13 @@ func (h *HomeMode) Macros() map[evdev.EvCode]Macro {
 		evdev.KEY_SPACE: {Label: "Toggle Lights", Action: actions.ToggleLights},
 		evdev.KEY_1:  {Label: "Toggle Desk Lamp", Action: actions.ToggleDesk},
 		evdev.KEY_2:  {Label: "Toggle Hanging Lamp", Action: actions.ToggleHanging},
+		evdev.KEY_3:  {Label: "Toggle Fan Power", Action: actions.ToggleFanPower},
+
+		evdev.KEY_F2: {Label: "Toggle Fan Light", Action: actions.ToggleFanLight},
 
 		// Scenes.
-		evdev.KEY_F2: {Label: "Leaving", Action: activateLeaving},
 		evdev.KEY_F3: {Label: "Focus Mood", Action: activateFocus},
-		evdev.KEY_F4: {Label: "Sexy Time", Action: activateSexyTime},
+		evdev.KEY_F4: {Label: "Leaving", Action: activateLeaving},
 	}
 }
 

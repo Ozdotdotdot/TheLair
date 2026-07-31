@@ -10,6 +10,10 @@ import (
 	"github.com/ozdotdotdot/TheLair/internal/sonotui"
 )
 
+// SexyTime is currently unbound from any key (F4 was reassigned to the
+// "Leaving" scene to make room for fan controls) — kept defined in case it
+// gets rebound to a free key later.
+
 var SexyTime = &Scene{
 	Name:       "Sexy Time",
 	AutoReturn: true,

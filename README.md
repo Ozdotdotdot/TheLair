@@ -23,8 +23,9 @@ A Razer Huntsman keyboard mounted on the wall, connected to a Raspberry Pi 3B+, 
 | `2` | Toggle hanging lamp |
 | `3` | Toggle fan power (motor + light) via Home Assistant → musicpi relay |
 | `F2` | Toggle fan light via Home Assistant → musicpi relay |
-| `F3` | Focus mood (plays a mood playlist via sonotui) |
 | `F4` | Leaving — lights off + pause music |
+| `F5` | Focus mood (plays a mood playlist via sonotui) |
+| `F6` | Sexy Time scene |
 | `ESC` | Kill switch — toggle all LEDs off/on |
 
 ### LED states

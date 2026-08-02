@@ -54,7 +54,7 @@ Loaded by `loadEnv` at startup (also via the systemd `EnvironmentFile`). Not in 
 | `HA_LIGHT_TOGGLE_URL` | F1 / Space toggle. **Also the source of the health-check URL** (path swapped to `/api/`). |
 | `HA_DESK_TOGGLE_URL` | Key `1` |
 | `HA_HANGING_TOGGLE_URL` | Key `2` |
-| `HA_FAN_POWER_TOGGLE_URL` | Key `3` — HA webhook that SSHes into musicpi and runs `fan_relay.py power` |
+| `HA_FAN_POWER_TOGGLE_URL` | Keys `3` / `F3` — HA webhook that SSHes into musicpi and runs `fan_relay.py power` |
 | `HA_FAN_LIGHT_TOGGLE_URL` | F2 — HA webhook that SSHes into musicpi and runs `fan_relay.py light` |
 | `HA_LIGHTS_OFF_URL` | "Leaving" scene (F4) |
 | `SONOTUI_URL` | MusicMode + scene music |

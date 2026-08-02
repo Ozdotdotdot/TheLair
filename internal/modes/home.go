@@ -24,6 +24,7 @@ func (h *HomeMode) Macros() map[evdev.EvCode]Macro {
 		evdev.KEY_3:  {Label: "Toggle Fan Power", Action: actions.ToggleFanPower},
 
 		evdev.KEY_F2: {Label: "Toggle Fan Light", Action: actions.ToggleFanLight},
+		evdev.KEY_F3: {Label: "Toggle Fan Power", Action: actions.ToggleFanPower},
 
 		// Scenes.
 		evdev.KEY_F4: {Label: "Leaving", Action: activateLeaving},

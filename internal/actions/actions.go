@@ -55,3 +55,4 @@ func LightsOff() bool      { return toggleWebhook("HA_LIGHTS_OFF_URL") }
 func ToggleFanLight() bool { return toggleWebhook("HA_FAN_LIGHT_TOGGLE_URL") }
 func ToggleFanPower() bool { return toggleWebhook("HA_FAN_POWER_TOGGLE_URL") }
 func ToggleAC() bool       { return toggleWebhook("HA_AC_TOGGLE_URL") }
+func TurnOffAC() bool      { return toggleWebhook("HA_AC_OFF_URL") }

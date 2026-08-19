@@ -55,11 +55,12 @@ func (h *HomeMode) IdleEnabled() bool      { return !scenes.IsActive() }
 func (h *HomeMode) SuccessAnimation() bool { return !scenes.IsActive() }
 
 func activateLeaving() bool {
-	// Fire-and-forget: lights off + pause music, no persistent scene state.
-	actions.LightsOff()
+	// Fire-and-forget: lights and AC off + pause music, no persistent scene state.
+	lightsOff := actions.LightsOff()
+	acOff := actions.TurnOffAC()
 	time.Sleep(300 * time.Millisecond)
 	sonotui.Pause()
-	return true
+	return lightsOff && acOff
 }
 
 func activateFocus() bool {

@@ -19,17 +19,19 @@ func (h *HomeMode) Macros() map[evdev.EvCode]Macro {
 	return map[evdev.EvCode]Macro{
 		evdev.KEY_F1:    {Label: "Toggle Lights", Action: actions.ToggleLights},
 		evdev.KEY_SPACE: {Label: "Toggle Lights", Action: actions.ToggleLights},
-		evdev.KEY_1:  {Label: "Toggle Desk Lamp", Action: actions.ToggleDesk},
-		evdev.KEY_2:  {Label: "Toggle Hanging Lamp", Action: actions.ToggleHanging},
-		evdev.KEY_3:  {Label: "Toggle Fan Power", Action: actions.ToggleFanPower},
+		evdev.KEY_1:     {Label: "Toggle Desk Lamp", Action: actions.ToggleDesk},
+		evdev.KEY_2:     {Label: "Toggle Hanging Lamp", Action: actions.ToggleHanging},
+		evdev.KEY_3:     {Label: "Toggle Fan Power", Action: actions.ToggleFanPower},
 
 		evdev.KEY_F2: {Label: "Toggle Fan Light", Action: actions.ToggleFanLight},
 		evdev.KEY_F3: {Label: "Toggle Fan Power", Action: actions.ToggleFanPower},
 
+		evdev.KEY_F4: {Label: "Toggle AC", Action: actions.ToggleAC},
+
 		// Scenes.
-		evdev.KEY_F4: {Label: "Leaving", Action: activateLeaving},
-		evdev.KEY_F5: {Label: "Focus Mood", Action: activateFocus},
-		evdev.KEY_F6: {Label: "Sexy Time", Action: activateSexyTime},
+		evdev.KEY_F5: {Label: "Leaving", Action: activateLeaving},
+		evdev.KEY_F7: {Label: "Focus Mood", Action: activateFocus},
+		evdev.KEY_F8: {Label: "Sexy Time", Action: activateSexyTime},
 	}
 }
 

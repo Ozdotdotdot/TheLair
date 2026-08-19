@@ -56,7 +56,8 @@ Loaded by `loadEnv` at startup (also via the systemd `EnvironmentFile`). Not in 
 | `HA_HANGING_TOGGLE_URL` | Key `2` |
 | `HA_FAN_POWER_TOGGLE_URL` | Keys `3` / `F3` — HA webhook that SSHes into musicpi and runs `fan_relay.py power` |
 | `HA_FAN_LIGHT_TOGGLE_URL` | F2 — HA webhook that SSHes into musicpi and runs `fan_relay.py light` |
-| `HA_LIGHTS_OFF_URL` | "Leaving" scene (F4) |
+| `HA_AC_TOGGLE_URL` | F4 — HA webhook that toggles the Midea climate entity |
+| `HA_LIGHTS_OFF_URL` | "Leaving" scene (F5) |
 | `SONOTUI_URL` | MusicMode + scene music |
 
 ## State model — read this before touching the event loop

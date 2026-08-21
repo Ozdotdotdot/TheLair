@@ -16,8 +16,9 @@ func HealthClient() *http.Client {
 	return &http.Client{Timeout: 3 * time.Second}
 }
 
-// HealthCheckURL derives the HA health endpoint from HA_LIGHT_TOGGLE_URL.
-// Uses /api/ which returns {"message":"API running."} — a no-op status check.
+// HealthCheckURL derives an unauthenticated HA health endpoint from
+// HA_LIGHT_TOGGLE_URL. The frontend root is sufficient to verify reachability;
+// polling /api/ without a token is treated as a failed login by Home Assistant.
 func HealthCheckURL() string {
 	raw := os.Getenv("HA_LIGHT_TOGGLE_URL")
 	if raw == "" {
@@ -27,7 +28,10 @@ func HealthCheckURL() string {
 	if err != nil {
 		return ""
 	}
-	u.Path = "/api/"
+	u.Path = "/"
+	u.RawPath = ""
+	u.RawQuery = ""
+	u.Fragment = ""
 	return u.String()
 }
 
